@@ -1832,13 +1832,23 @@ net       = ΔC − carbon price · ΔCO₂_ETS     (or · ΔE on a life-cycle b
   function upsert(id, cfg) {
     const canvas = $(id);
     if (!canvas) return;
+    const box = canvas.parentElement;
     if (!setupChartJs()) {
-      const box = canvas.parentElement;
       if (!box.querySelector('.chart-fallback')) box.append(el('div', { class: 'chart-fallback', text: 'The chart library did not load in this view. The data table below has every value.' }));
       return;
     }
-    if (charts[id]) { charts[id].data = cfg.data; charts[id].options = cfg.options; charts[id].update(reduceMotion ? 'none' : undefined); }
+    const old = box.querySelector('.chart-fallback'); if (old) old.remove();
+    let ch = charts[id];
+    // A chart that was sized while its tab was hidden can stay blank: rebuild it.
+    if (ch && (!ch.width || !ch.height || ch.canvas !== canvas)) { try { ch.destroy(); } catch (e) { /* ignore */ } ch = null; delete charts[id]; }
+    if (ch) { ch.data = cfg.data; ch.options = cfg.options; ch.update('none'); ch.resize(); }
     else charts[id] = new Chart(canvas.getContext('2d'), cfg);
+  }
+  function chartError(id, e) {
+    const canvas = $(id); if (!canvas) return;
+    const box = canvas.parentElement;
+    if (!box.querySelector('.chart-fallback')) box.append(el('div', { class: 'chart-fallback', text: 'This chart could not be drawn (' + (e && e.message ? e.message : e) + '). The data table below has every value.' }));
+    if (window.console) console.error(e);
   }
   function tooltipBase(t) {
     return { backgroundColor: t.raised, borderColor: t.lineStrong, borderWidth: 1, titleColor: t.ink2, bodyColor: t.ink,
@@ -1906,16 +1916,27 @@ net       = ΔC − carbon price · ΔCO₂_ETS     (or · ΔE on a life-cycle b
     renderCharts(activeView);
     saveState();
   }
+  const VIEW_CHARTS = {
+    savings: [['ch-cost', (r, mk, t) => chartCost(r, t)], ['ch-ghg', (r, mk, t) => chartGhg(r, t)], ['ch-be', (r, mk, t) => chartBreakEven(r, mk, t)]],
+    performance: [['ch-pr', (r, mk, t) => chartPayloadRange(r, t)]],
+    fuel: [['ch-rho', (r, mk, t) => chartWall(r, t)], ['ch-ed', (r, mk, t) => chartEnergy(r, t)]],
+    pathways: [['ch-ci', (r, mk, t) => chartCI(r, t)], ['ch-ab', (r, mk, t) => chartAbate(r, mk, t)]],
+    market: [['ch-hist', (r, mk, t) => chartHistory(t)]]
+  };
   function renderCharts(view) {
     if (!last) return;
     const r = last, mk = lastMk, t = theme();
-    try {
-      if (view === 'savings') { chartCost(r, t); chartGhg(r, t); chartBreakEven(r, mk, t); }
-      else if (view === 'performance') chartPayloadRange(r, t);
-      else if (view === 'fuel') { chartWall(r, t); chartEnergy(r, t); }
-      else if (view === 'pathways') { chartCI(r, t); chartAbate(r, mk, t); }
-      else if (view === 'market') chartHistory(t);
-    } catch (e) { if (window.console) console.error(e); }
+    (VIEW_CHARTS[view] || []).forEach(([id, fn]) => { try { fn(r, mk, t); } catch (e) { chartError(id, e); } });
+  }
+  function settleCharts(view) {
+    // draw once the tab is laid out, then make sure every chart in it has its real size
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      renderCharts(view);
+      setTimeout(() => {
+        const sec = $('view-' + view); if (!sec) return;
+        sec.querySelectorAll('canvas').forEach(c => { const ch = window.Chart && Chart.getChart(c); if (ch) ch.resize(); });
+      }, 250);
+    }));
   }
 
   // ------------------------------------------------------------- ticker
@@ -2703,7 +2724,7 @@ net       = ΔC − carbon price · ΔCO₂_ETS     (or · ΔE on a life-cycle b
       $('view-' + n).classList.toggle('active', n === v);
       const tab = $('tab-' + n); tab.setAttribute('aria-selected', String(n === v)); tab.tabIndex = n === v ? 0 : -1;
     });
-    renderCharts(v);
+    settleCharts(v);
   }
   function viewFromHash() { const h = (location.hash || '').replace('#', ''); return VIEWS.includes(h) ? h : 'savings'; }
 
@@ -2727,6 +2748,8 @@ net       = ΔC − carbon price · ΔCO₂_ETS     (or · ΔE on a life-cycle b
       $('btn-rail').textContent = open ? 'Done' : 'Edit';
     });
     window.addEventListener('hashchange', () => showView(viewFromHash()));
+    let rzT = 0; window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(() => settleCharts(activeView), 200); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) settleCharts(activeView); });
     document.querySelector('.tabs').addEventListener('keydown', e => {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       const i = VIEWS.indexOf(activeView) + (e.key === 'ArrowRight' ? 1 : -1);
