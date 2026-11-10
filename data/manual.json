@@ -1,0 +1,16 @@
+{
+  "_note": "Edit by hand. saf: the latest NW Europe SAF (HEFA) price you trust. carbon: fill in only if the automatic EU ETS quote fails; it is used when its date is newer than the feed's.",
+  "saf": {
+    "hefa_usd_t": 2788,
+    "period": "Q3 2026 average",
+    "source": "BloombergNEF, NW Europe SAF price",
+    "url": "https://www.bnef.com/insights/40591"
+  },
+  "carbon": {
+    "eua_eur_t": null,
+    "date": "",
+    "label": "EUA Dec futures settlement",
+    "source": "",
+    "url": ""
+  }
+}

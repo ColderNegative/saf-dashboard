@@ -1,0 +1,2770 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAF vs Jet A-1 Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  /* Instrument-panel layout: live market strip on top, criteria rail on the left,
+     analysis views on the right. Every figure recomputes as an input changes. */
+  --plane: #eef1f4;
+  --surface: #fcfcfd;
+  --raised: #ffffff;
+  --ink: #101820;
+  --ink-2: #4a5462;
+  --muted: #747e8a;
+  --line: #e0e5ea;
+  --line-strong: #c4ccd5;
+  --accent: #2a78d6;
+  --accent-ink: #1c5cab;
+  --accent-wash: rgba(42, 120, 214, 0.10);
+  --s-blend: #2a78d6;
+  --s-jet: #eb6834;
+  --s-neat: #1baf7a;
+  --s-neutral: #aab3bd;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --warn: #fab219;
+  --warn-ink: #855700;
+  --bad: #d03b3b;
+  --bad-ink: #b02a2a;
+  --bad-wash: rgba(208, 59, 59, 0.08);
+  --font-display: 'IBM Plex Sans Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-body: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(16, 24, 32, 0.04), 0 4px 16px rgba(16, 24, 32, 0.04);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --plane: #0c0f13;
+    --surface: #151a20;
+    --raised: #1c232b;
+    --ink: #eef1f4;
+    --ink-2: #b9c2cc;
+    --muted: #8c96a1;
+    --line: #252c34;
+    --line-strong: #37414c;
+    --accent: #3987e5;
+    --accent-ink: #84b5f0;
+    --accent-wash: rgba(57, 135, 229, 0.16);
+    --s-blend: #3987e5;
+    --s-jet: #d95926;
+    --s-neat: #199e70;
+    --s-neutral: #56616d;
+    --good-ink: #2fbf2f;
+    --warn-ink: #fab219;
+    --bad-ink: #ef7a7a;
+    --bad-wash: rgba(230, 103, 103, 0.10);
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --plane: #0c0f13;
+  --surface: #151a20;
+  --raised: #1c232b;
+  --ink: #eef1f4;
+  --ink-2: #b9c2cc;
+  --muted: #8c96a1;
+  --line: #252c34;
+  --line-strong: #37414c;
+  --accent: #3987e5;
+  --accent-ink: #84b5f0;
+  --accent-wash: rgba(57, 135, 229, 0.16);
+  --s-blend: #3987e5;
+  --s-jet: #d95926;
+  --s-neat: #199e70;
+  --s-neutral: #56616d;
+  --good-ink: #2fbf2f;
+  --warn-ink: #fab219;
+  --bad-ink: #ef7a7a;
+  --bad-wash: rgba(230, 103, 103, 0.10);
+  --shadow: none;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--plane);
+  color: var(--ink);
+  font: 400 14.5px/1.5 var(--font-body);
+}
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+p { margin: 0; }
+a { color: var(--accent-ink); text-underline-offset: 2px; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.num { font-variant-numeric: tabular-nums; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---------- masthead ---------- */
+.masthead {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+  gap: 12px 24px; padding: 22px 24px 14px;
+}
+.mast-title h1 {
+  font: 600 30px/1.1 var(--font-display); letter-spacing: -0.01em;
+}
+.mast-title h1 span { color: var(--muted); font-weight: 500; }
+.mast-title p { color: var(--ink-2); margin-top: 6px; max-width: 64ch; }
+.mast-controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.mast-controls .ctl { display: flex; align-items: center; gap: 8px; }
+.mast-controls .ctl > span { font-size: 12.5px; color: var(--muted); }
+
+/* ---------- ticker ---------- */
+.ticker {
+  display: flex; flex-wrap: wrap;
+  gap: 1px; margin: 0 24px; background: var(--line);
+  border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+}
+.tick { background: var(--surface); padding: 11px 14px 12px; min-width: 0; flex: 1 1 178px; }
+.tick .t-lbl { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+.tick .t-val { font: 500 20px/1.25 var(--font-mono); letter-spacing: -0.02em; margin-top: 3px; white-space: nowrap; }
+.tick .t-val small { font: 400 12px var(--font-body); color: var(--ink-2); letter-spacing: 0; margin-left: 2px; }
+.tick .t-sub { font-size: 12px; color: var(--ink-2); margin-top: 2px; display: flex; gap: 6px; flex-wrap: wrap; }
+.delta-up { color: var(--bad-ink); }
+.delta-down { color: var(--good-ink); }
+.tick.feed { display: flex; flex-direction: column; justify-content: center; gap: 6px; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px 2px 7px;
+  border-radius: 999px; font-size: 12px; font-weight: 500; line-height: 1.6;
+  border: 1px solid var(--line-strong); background: var(--raised); color: var(--ink);
+  white-space: nowrap;
+}
+.pill svg { width: 12px; height: 12px; flex: none; }
+.pill.good { border-color: color-mix(in srgb, var(--good) 45%, transparent); }
+.pill.good svg { color: var(--good); }
+.pill.warn { border-color: color-mix(in srgb, var(--warn) 60%, transparent); }
+.pill.warn svg { color: var(--warn); }
+.pill.bad { border-color: color-mix(in srgb, var(--bad) 50%, transparent); }
+.pill.bad svg { color: var(--bad); }
+.pill.neutral svg { color: var(--muted); }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 22%, transparent); }
+@media (prefers-reduced-motion: no-preference) {
+  .live-dot { animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--good) 8%, transparent); } }
+}
+
+/* ---------- shell ---------- */
+.shell {
+  display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 20px;
+  padding: 16px 24px 28px; align-items: start;
+}
+@media (max-width: 1000px) { .shell { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- criteria rail ---------- */
+.rail {
+  position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); scrollbar-width: thin;
+}
+.rail-fade { position: sticky; bottom: 0; height: 26px; margin-top: -26px; pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--surface) 85%); border-radius: 0 0 var(--radius) var(--radius); }
+.rail-toggle, .rail-summary { display: none; }
+@media (max-width: 1000px) {
+  .rail { position: static; max-height: none; }
+  .rail-fade { display: none; }
+  .rail-toggle { display: inline-flex; }
+  .rail:not(.open) #criteria { display: none; }
+  .rail:not(.open) .rail-summary { display: block; padding: 0 16px 14px; font-size: 13px; color: var(--ink-2); }
+}
+.rail-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 4px; }
+.rail-head h2 { font: 600 15px/1.2 var(--font-display); letter-spacing: 0.01em; }
+.rail-sec { padding: 12px 16px 14px; border-top: 1px solid var(--line); display: grid; gap: 12px; }
+.rail-sec:first-of-type { border-top: 0; }
+.rail-h { font: 600 12.5px/1.2 var(--font-body); color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label, .field .label { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+.field-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.two > div { display: grid; gap: 6px; grid-template-rows: 1fr auto; align-items: end; min-width: 0; }
+.hint { font-size: 12px; color: var(--muted); line-height: 1.45; }
+.hint.warn { color: var(--warn-ink); }
+.hint.bad { color: var(--bad-ink); }
+.derived { font-size: 12.5px; color: var(--ink-2); background: var(--plane); border-radius: 6px; padding: 6px 9px; }
+
+select, input[type="number"], input[type="text"] {
+  width: 100%; min-width: 0; height: 34px; padding: 0 10px; border-radius: 7px;
+  border: 1px solid var(--line-strong); background: var(--raised);
+  font-variant-numeric: tabular-nums;
+}
+select { padding-right: 28px; appearance: none; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) 15px, calc(100% - 10px) 15px; background-size: 5px 5px; background-repeat: no-repeat; }
+input:disabled { color: var(--ink-2); background: var(--plane); border-style: dashed; }
+input[type="number"]::-webkit-inner-spin-button { opacity: 0.4; }
+.with-unit { display: flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 7px; background: var(--raised); overflow: hidden; }
+.with-unit input { border: 0; border-radius: 0; height: 32px; background: transparent; }
+.with-unit input:disabled { background: transparent; border: 0; }
+.with-unit:has(input:disabled) { background: var(--plane); border-style: dashed; }
+.with-unit .u { flex: none; padding: 0 10px; font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.readout { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.readout input { width: 78px; height: 28px; text-align: right; padding: 0 6px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); margin: 2px 0; height: 20px; cursor: pointer; }
+
+.seg { display: flex; flex-wrap: wrap; gap: 0; border: 1px solid var(--line-strong); border-radius: 8px; overflow: hidden; background: var(--raised); }
+.seg label { flex: 1 1 auto; position: relative; margin: 0; cursor: pointer; font-size: 12.5px; color: var(--ink-2); font-weight: 500; }
+.seg label + label { border-left: 1px solid var(--line); }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.seg span { display: block; text-align: center; padding: 6px 8px; white-space: nowrap; }
+.seg input:checked + span { background: var(--accent-wash); color: var(--accent-ink); box-shadow: inset 0 -2px 0 var(--accent); }
+.seg input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: -2px; }
+.seg label:hover span { background: color-mix(in srgb, var(--accent-wash) 50%, transparent); }
+.seg.small span { padding: 4px 8px; font-size: 12px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line-strong); background: var(--raised); color: var(--ink-2);
+  border-radius: 999px; padding: 2px 10px; font-size: 12px; cursor: pointer; line-height: 1.6;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent-ink); }
+.chip[aria-pressed="true"] { background: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink); font-weight: 500; }
+
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.switch input { appearance: none; width: 32px; height: 18px; border-radius: 999px; background: var(--line-strong); position: relative; cursor: pointer; margin: 0; transition: background .15s; }
+.switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.switch input:checked { background: var(--accent); }
+.switch input:checked::after { transform: translateX(14px); }
+
+details.adv > summary { cursor: pointer; font-size: 13px; font-weight: 500; color: var(--ink-2); list-style: none; display: flex; align-items: center; gap: 6px; }
+details.adv > summary::before { content: ""; width: 6px; height: 6px; border-right: 1.5px solid var(--muted); border-bottom: 1.5px solid var(--muted); transform: rotate(-45deg); transition: transform .15s; }
+details.adv[open] > summary::before { transform: rotate(45deg); }
+details.adv > summary::-webkit-details-marker { display: none; }
+.adv-body { display: grid; gap: 12px; margin-top: 12px; }
+.adv-body h3 { font: 600 12px/1.2 var(--font-body); color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 32px; padding: 0 12px; border-radius: 7px; border: 1px solid var(--line-strong);
+  background: var(--raised); color: var(--ink); font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent-ink); }
+.btn svg { width: 14px; height: 14px; }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--accent-ink); }
+
+/* ---------- main / tabs ---------- */
+.main { min-width: 0; display: grid; gap: 16px; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line-strong); overflow-x: auto; scrollbar-width: none; }
+.tabs a {
+  flex: none; padding: 9px 14px 10px; font-weight: 500; color: var(--ink-2); text-decoration: none;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; font-size: 14px; white-space: nowrap;
+}
+.tabs a:hover { color: var(--ink); }
+.tabs a[aria-selected="true"] { color: var(--accent-ink); border-bottom-color: var(--accent); }
+.view { display: none; gap: 16px; min-width: 0; }
+.view.active { display: grid; }
+.view-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px 16px; }
+.view-head h2 { font: 600 21px/1.2 var(--font-display); }
+.view-head .lede { color: var(--ink-2); margin-top: 4px; max-width: 72ch; }
+
+.banner { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; border-radius: 8px; font-size: 13.5px; border: 1px solid; }
+.banner svg { width: 16px; height: 16px; flex: none; margin-top: 2px; }
+.banner.bad { border-color: color-mix(in srgb, var(--bad) 40%, transparent); background: var(--bad-wash); }
+.banner.bad svg { color: var(--bad); }
+.banner.warn { border-color: color-mix(in srgb, var(--warn) 55%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); }
+.banner.warn svg { color: var(--warn); }
+
+.summary {
+  background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: var(--radius); padding: 14px 16px; font-size: 15px; line-height: 1.6; max-width: none;
+}
+.summary strong { font-weight: 600; }
+
+/* ---------- cards / tiles ---------- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; min-width: 0; box-shadow: var(--shadow); }
+.card-h { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; margin-bottom: 10px; }
+.card-h h3 { font: 600 15.5px/1.3 var(--font-body); }
+.card-h .note { font-size: 12.5px; color: var(--muted); }
+.card .foot { font-size: 12.5px; color: var(--muted); margin-top: 10px; line-height: 1.5; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 1250px) { .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .grid-2, .grid-3 { grid-template-columns: minmax(0, 1fr); } }
+
+.kpis { display: grid; grid-template-columns: minmax(250px, 1.15fr) minmax(0, 3fr); gap: 16px; }
+@media (max-width: 1100px) { .kpis { grid-template-columns: minmax(0, 1fr); } }
+.hero { display: grid; align-content: space-between; gap: 12px; }
+.hero .h-lbl { font-size: 13px; color: var(--ink-2); font-weight: 500; }
+.hero .h-val { font: 600 50px/1 var(--font-body); letter-spacing: -0.025em; margin-top: 8px; }
+.hero .h-val small { font-size: 18px; font-weight: 500; color: var(--ink-2); letter-spacing: 0; margin-left: 4px; }
+.hero .h-sub { color: var(--ink-2); font-size: 13px; margin-top: 8px; }
+.tiles-wrap { container-type: inline-size; min-width: 0; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; height: 100%; }
+@container (min-width: 660px) {
+  .tiles.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .tiles.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@container (max-width: 340px) { .tiles { grid-template-columns: minmax(0, 1fr); } }
+.hero .kv { font-size: 12.5px; border-top: 1px solid var(--line); padding-top: 10px; }
+.tile { background: var(--surface); padding: 13px 15px 14px; display: grid; gap: 3px; align-content: start; min-width: 0; }
+.tile .k-lbl { font-size: 12.5px; color: var(--ink-2); font-weight: 500; }
+.tile .k-val { font: 600 23px/1.2 var(--font-body); letter-spacing: -0.015em; }
+.tile .k-val small { font-size: 13px; font-weight: 500; color: var(--ink-2); letter-spacing: 0; margin-left: 2px; }
+.tile .k-sub { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+.meter { display: grid; gap: 5px; }
+.meter .m-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--ink-2); gap: 8px; }
+.meter .m-track { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--accent) 16%, transparent); overflow: hidden; }
+.meter .m-fill { height: 100%; border-radius: 999px; background: var(--accent); }
+.meter.warn .m-fill { background: var(--warn); }
+.meter.bad .m-fill { background: var(--bad); }
+.meter.warn .m-track { background: color-mix(in srgb, var(--warn) 18%, transparent); }
+.meter.bad .m-track { background: color-mix(in srgb, var(--bad) 16%, transparent); }
+
+/* ---------- charts ---------- */
+.chart-box { position: relative; height: 300px; width: 100%; }
+.chart-box.short { height: 190px; }
+.chart-box.mid { height: 250px; }
+.chart-box.tall { height: 360px; }
+.chart-box canvas { display: block; }
+.chart-fallback { position: absolute; inset: 0; display: grid; place-items: center; font-size: 13px; color: var(--muted); text-align: center; padding: 20px; border: 1px dashed var(--line-strong); border-radius: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-2); margin: -2px 0 8px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.legend i.line { height: 2px; width: 16px; border-radius: 2px; }
+.legend i.dot { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 0 2px var(--surface); }
+.legend i.ref { height: 0; width: 16px; border-top: 1.5px dashed var(--muted); border-radius: 0; }
+
+details.tableview { margin-top: 10px; }
+details.tableview > summary { cursor: pointer; font-size: 12.5px; color: var(--accent-ink); width: fit-content; }
+.tw { overflow-x: auto; margin-top: 8px; }
+
+/* ---------- tables ---------- */
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+table.data th:first-child, table.data td:first-child { text-align: left; white-space: normal; }
+table.data thead th { font-weight: 500; color: var(--muted); font-size: 12px; border-bottom-color: var(--line-strong); vertical-align: bottom; }
+table.data tbody tr:hover { background: color-mix(in srgb, var(--accent-wash) 45%, transparent); }
+table.data tr.sel { background: var(--accent-wash); }
+table.data tr.sel td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+table.data td.l, table.data th.l { text-align: left; }
+table.data .sub { color: var(--muted); font-size: 12px; }
+table.data tr.clickable { cursor: pointer; }
+table.data.nowrap-first td:first-child { white-space: nowrap; }
+table.data td.wrap { white-space: normal; min-width: 14ch; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 7px; vertical-align: -1px; }
+.ok-mark, .bad-mark { display: inline-flex; align-items: center; gap: 5px; font-weight: 500; }
+.ok-mark { color: var(--good-ink); }
+.bad-mark { color: var(--bad-ink); }
+.ok-mark svg, .bad-mark svg { width: 13px; height: 13px; }
+
+.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 5px 14px; font-size: 13px; }
+.kv dt { color: var(--ink-2); }
+.kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+/* ---------- method ---------- */
+.prose { max-width: 78ch; display: grid; gap: 12px; line-height: 1.65; }
+.prose h3 { font: 600 16px/1.3 var(--font-body); margin-top: 8px; }
+.eq { font-family: var(--font-mono); font-size: 13px; background: var(--plane); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow-x: auto; white-space: pre; line-height: 1.7; }
+.prose ul, .prose ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.src-list { font-size: 13px; }
+.src-list li { line-height: 1.5; }
+
+footer.foot-page { padding: 6px 24px 28px; color: var(--muted); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: space-between; }
+
+.toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: var(--surface); padding: 8px 14px; border-radius: 8px; font-size: 13px; z-index: 50; box-shadow: 0 6px 24px rgba(0,0,0,.2); }
+
+@media (max-width: 600px) {
+  .masthead, .shell { padding-left: 16px; padding-right: 16px; }
+  .ticker { margin: 0 16px; }
+  .mast-title h1 { font-size: 25px; }
+  .hero .h-val { font-size: 42px; }
+  footer.foot-page { padding: 6px 16px 24px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="mast-title">
+    <h1>SAF vs Jet A-1 <span>dashboard</span></h1>
+    <p>Cost, life-cycle CO₂e and aircraft-performance effects of sustainable aviation fuel blends, priced against the latest jet fuel market. BEng project: Techno-Economic and Climate Assessment of Alternative Aviation Fuels.</p>
+  </div>
+  <div class="mast-controls" aria-label="Display units">
+    <div class="ctl"><span id="lbl-cur">Currency</span>
+      <div class="seg small" role="radiogroup" aria-labelledby="lbl-cur" id="ctl-currency"></div>
+    </div>
+    <div class="ctl"><span id="lbl-unit">Fuel price per</span>
+      <div class="seg small" role="radiogroup" aria-labelledby="lbl-unit" id="ctl-unit"></div>
+    </div>
+  </div>
+</header>
+
+<section class="ticker" aria-label="Latest market prices">
+  <div class="tick">
+    <div class="t-lbl">Jet A-1, global average</div>
+    <div class="t-val num" id="tk-iata">—</div>
+    <div class="t-sub" id="tk-iata-sub">IATA / Platts, weekly</div>
+  </div>
+  <div class="tick">
+    <div class="t-lbl">Jet fuel, US Gulf Coast spot</div>
+    <div class="t-val num" id="tk-usgc">—</div>
+    <div class="t-sub" id="tk-usgc-sub">EIA, daily</div>
+  </div>
+  <div class="tick">
+    <div class="t-lbl">EU ETS allowance</div>
+    <div class="t-val num" id="tk-eua">—</div>
+    <div class="t-sub" id="tk-eua-sub">EUA Dec futures</div>
+  </div>
+  <div class="tick">
+    <div class="t-lbl">SAF (HEFA), NW Europe</div>
+    <div class="t-val num" id="tk-saf">—</div>
+    <div class="t-sub" id="tk-saf-sub">BloombergNEF</div>
+  </div>
+  <div class="tick feed">
+    <div id="tk-feed"></div>
+    <div class="t-sub" id="tk-feed-sub"></div>
+  </div>
+</section>
+
+<div class="shell">
+  <aside class="rail" aria-label="Scenario criteria">
+    <div class="rail-head">
+      <h2>Your criteria</h2>
+      <div style="display:flex;gap:4px">
+        <button type="button" class="btn ghost" id="btn-reset" title="Restore the default scenario">Reset</button>
+        <button type="button" class="btn rail-toggle" id="btn-rail" aria-expanded="false" aria-controls="criteria">Edit</button>
+      </div>
+    </div>
+    <p class="rail-summary" id="rail-summary"></p>
+    <form id="criteria" autocomplete="off" novalidate>
+      <section class="rail-sec">
+        <h3 class="rail-h">Aircraft and mission</h3>
+        <div class="field">
+          <label for="in-ac">Aircraft</label>
+          <select id="in-ac"></select>
+        </div>
+        <div class="field">
+          <div class="field-row"><label for="in-range">Stage length</label>
+            <span class="readout"><input id="in-range-n" type="number" inputmode="numeric" min="100" step="50" aria-label="Stage length in km"> km</span></div>
+          <input id="in-range" type="range" min="200" max="9000" step="50" aria-describedby="range-hint">
+          <p class="hint" id="range-hint"></p>
+        </div>
+        <div class="two">
+          <div><label for="in-seats">Seats</label><input id="in-seats" type="number" inputmode="numeric" min="1" step="1"></div>
+          <div><label for="in-lf">Load factor</label><div class="with-unit"><input id="in-lf" type="number" inputmode="numeric" min="1" max="100" step="1"><span class="u">%</span></div></div>
+        </div>
+        <div class="field">
+          <label for="in-cargo">Cargo</label>
+          <div class="with-unit"><input id="in-cargo" type="number" inputmode="numeric" min="0" step="100"><span class="u">kg</span></div>
+        </div>
+        <p class="derived" id="payload-readout">—</p>
+        <div class="two">
+          <div><label for="in-flights">Flights per aircraft per year</label><input id="in-flights" type="number" inputmode="numeric" min="1" step="10"></div>
+          <div><label for="in-fleet">Aircraft in fleet</label><input id="in-fleet" type="number" inputmode="numeric" min="1" step="1"></div>
+        </div>
+      </section>
+
+      <section class="rail-sec">
+        <h3 class="rail-h">Fuel</h3>
+        <div class="field">
+          <span class="label" id="lbl-path">Pathway</span>
+          <div class="seg" role="radiogroup" aria-labelledby="lbl-path" id="in-path"></div>
+          <p class="hint" id="path-hint"></p>
+        </div>
+        <div class="field">
+          <label for="in-feed">Feedstock (CORSIA life-cycle value)</label>
+          <select id="in-feed"></select>
+          <p class="hint" id="feed-hint"></p>
+        </div>
+        <div class="field" id="grid-field" hidden>
+          <div class="field-row"><label for="in-grid">Electricity carbon intensity</label>
+            <span class="readout"><output id="out-grid" for="in-grid">20</output> g/kWh</span></div>
+          <input id="in-grid" type="range" min="0" max="450" step="5">
+          <p class="hint">Dedicated wind or solar ≈ 10–50 g/kWh. Grid-average power makes e-SPK worse than fossil jet above roughly 120 g/kWh.</p>
+        </div>
+        <div class="field">
+          <div class="field-row"><label for="in-blend">SAF share of the blend</label>
+            <span class="readout"><input id="in-blend-n" type="number" inputmode="numeric" min="0" max="100" step="1" aria-label="SAF share in percent by volume"> % vol</span></div>
+          <input id="in-blend" type="range" min="0" max="100" step="1">
+          <div class="chips" id="blend-chips"></div>
+          <p class="hint">2% EU and UK mandates 2025 · 6% ReFuelEU 2030 · 10% UK 2030 · 20% ReFuelEU 2035 · 50% ASTM cap</p>
+          <p class="hint" id="blend-warn" hidden></p>
+        </div>
+      </section>
+
+      <section class="rail-sec">
+        <h3 class="rail-h">Prices</h3>
+        <div class="field">
+          <span class="label" id="lbl-jet">Jet A-1 price</span>
+          <div class="seg" role="radiogroup" aria-labelledby="lbl-jet" id="in-jetbasis"></div>
+          <div class="with-unit"><input id="in-jet" type="number" step="any" aria-label="Jet A-1 price"><span class="u" id="jet-unit"></span></div>
+          <p class="hint" id="jet-hint"></p>
+        </div>
+        <div class="field">
+          <label for="in-saf">SAF price (neat)</label>
+          <div class="with-unit"><input id="in-saf" type="number" step="any"><span class="u" id="saf-unit"></span></div>
+          <div class="chips" id="saf-chips"></div>
+          <p class="hint" id="saf-hint"></p>
+        </div>
+        <div class="field">
+          <div class="field-row"><span class="label">Carbon price</span>
+            <label class="switch"><input type="checkbox" id="in-carbon-on"><span>Apply</span></label></div>
+          <div class="seg" role="radiogroup" aria-label="Carbon price source" id="in-carbonsrc"></div>
+          <div class="with-unit"><input id="in-carbon" type="number" step="any" aria-label="Carbon price"><span class="u" id="carbon-unit"></span></div>
+          <div class="seg small" role="radiogroup" aria-label="Emissions the carbon price applies to" id="in-basis"></div>
+          <p class="hint" id="carbon-hint"></p>
+        </div>
+      </section>
+
+      <section class="rail-sec">
+        <details class="adv" id="adv">
+          <summary>Advanced assumptions</summary>
+          <div class="adv-body">
+            <h3>Jet A-1 (typical batch)</h3>
+            <div class="two">
+              <div><label for="in-jlhv">LHV</label><div class="with-unit"><input id="in-jlhv" type="number" step="0.05" min="42.8" max="44"><span class="u">MJ/kg</span></div></div>
+              <div><label for="in-jrho">Density</label><div class="with-unit"><input id="in-jrho" type="number" step="1" min="775" max="840"><span class="u">kg/m³</span></div></div>
+            </div>
+            <div class="field"><label for="in-jarom">Aromatics</label><div class="with-unit"><input id="in-jarom" type="number" step="0.5" min="0" max="25"><span class="u">% vol</span></div></div>
+            <h3 id="adv-saf-h">Neat SAF</h3>
+            <div class="two">
+              <div><label for="in-slhv">LHV</label><div class="with-unit"><input id="in-slhv" type="number" step="0.05" min="42" max="46"><span class="u">MJ/kg</span></div></div>
+              <div><label for="in-srho">Density</label><div class="with-unit"><input id="in-srho" type="number" step="1" min="720" max="800"><span class="u">kg/m³</span></div></div>
+            </div>
+            <h3>Mission rules</h3>
+            <div class="two">
+              <div><label for="in-cont">Contingency fuel</label><div class="with-unit"><input id="in-cont" type="number" step="0.5" min="0" max="10"><span class="u">% trip</span></div></div>
+              <div><label for="in-pax">Mass per passenger</label><div class="with-unit"><input id="in-pax" type="number" step="1" min="70" max="130"><span class="u">kg</span></div></div>
+            </div>
+            <div class="two">
+              <div><label for="in-res">Alternate + final reserve</label><div class="with-unit"><input id="in-res" type="number" step="10" min="0" max="1500"><span class="u">km</span></div></div>
+              <div><label for="in-allow">Taxi, climb, descent</label><div class="with-unit"><input id="in-allow" type="number" step="10" min="0" max="800"><span class="u">km</span></div></div>
+            </div>
+            <p class="hint">Reserves are flown at cruise efficiency over the equivalent distance. Changing these re-calibrates η₀·L/D so Jet A-1 still matches the published range.</p>
+          </div>
+        </details>
+      </section>
+    </form>
+    <div class="rail-fade" aria-hidden="true"></div>
+  </aside>
+
+  <main class="main">
+    <nav class="tabs" role="tablist" aria-label="Analysis views">
+      <a href="#savings" role="tab" data-view="savings" id="tab-savings">Savings</a>
+      <a href="#performance" role="tab" data-view="performance" id="tab-performance">Aircraft performance</a>
+      <a href="#fuel" role="tab" data-view="fuel" id="tab-fuel">Fuel properties</a>
+      <a href="#pathways" role="tab" data-view="pathways" id="tab-pathways">Pathways</a>
+      <a href="#market" role="tab" data-view="market" id="tab-market">Market</a>
+      <a href="#method" role="tab" data-view="method" id="tab-method">Method and sources</a>
+    </nav>
+
+    <!-- ================= SAVINGS ================= -->
+    <section class="view" id="view-savings" role="tabpanel" aria-labelledby="tab-savings">
+      <div class="view-head">
+        <div>
+          <h2>What the blend saves, and what it costs</h2>
+          <p class="lede">Per flight and per year for your mission, at the current jet fuel price.</p>
+        </div>
+        <button type="button" class="btn" id="btn-export"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2v8m0 0 3-3m-3 3L5 7M3 13h10"/></svg>Export scenario (CSV)</button>
+      </div>
+      <div id="sav-banners"></div>
+      <p class="summary" id="summary">—</p>
+      <div class="kpis">
+        <div class="card hero">
+          <div>
+            <div class="h-lbl">Life-cycle CO₂e avoided per year</div>
+            <div class="h-val" id="hero-val">—</div>
+            <div class="h-sub" id="hero-sub">—</div>
+          </div>
+          <dl class="kv" id="hero-kv"></dl>
+          <div id="verdict"></div>
+        </div>
+        <div class="tiles-wrap"><div class="tiles c4" id="tiles"></div></div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-h"><h3>Cost per flight</h3><span class="note" id="cost-note"></span></div>
+          <div class="legend" id="cost-legend"></div>
+          <div class="chart-box short"><canvas id="ch-cost" role="img" aria-label="Cost per flight, Jet A-1 versus blend"></canvas></div>
+          <details class="tableview"><summary>Show data table</summary><div class="tw" id="tw-cost"></div></details>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>Life-cycle CO₂e per flight</h3><span class="note">well-to-wake, CORSIA method</span></div>
+          <div class="chart-box short"><canvas id="ch-ghg" role="img" aria-label="Life-cycle emissions per flight"></canvas></div>
+          <p class="foot">* Neat SAF is above the 50% limit in ASTM D7566 and not certified for airline use; shown for reference.</p>
+          <details class="tableview"><summary>Show data table</summary><div class="tw" id="tw-ghg"></div></details>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>When does the blend pay for itself?</h3><span class="note" id="be-note"></span></div>
+        <p class="foot" style="margin:-4px 0 10px" id="be-lede"></p>
+        <div class="legend" id="be-legend"></div>
+        <div class="chart-box"><canvas id="ch-be" role="img" aria-label="Break-even carbon price against jet fuel price"></canvas></div>
+        <details class="tableview"><summary>Show data table</summary><div class="tw" id="tw-be"></div></details>
+      </div>
+    </section>
+
+    <!-- ================= PERFORMANCE ================= -->
+    <section class="view" id="view-performance" role="tabpanel" aria-labelledby="tab-performance">
+      <div class="view-head">
+        <div>
+          <h2>Aircraft performance</h2>
+          <p class="lede">SAF carries more energy per kilogram but less per litre. Breguet range equation with η₀·L/D calibrated to the manufacturer's range.</p>
+        </div>
+      </div>
+      <div id="perf-banners"></div>
+      <div class="tiles-wrap"><div class="tiles c4" id="perf-tiles"></div></div>
+      <div class="card">
+        <div class="card-h"><h3>Payload–range diagram</h3><span class="note" id="pr-note"></span></div>
+        <div class="legend" id="pr-legend"></div>
+        <div class="chart-box tall"><canvas id="ch-pr" role="img" aria-label="Payload range diagram for Jet A-1, the blend and neat SAF"></canvas></div>
+        <p class="foot" id="pr-foot"></p>
+        <details class="tableview"><summary>Show data table</summary><div class="tw" id="tw-pr"></div></details>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-h"><h3>Mission fuel and mass</h3><span class="note" id="mission-note"></span></div>
+          <div class="tw" id="mission-table"></div>
+          <p class="foot">* Neat SAF is not certified for airline use; shown to bound the effect. Combustion CO₂ counts all carbon in the fuel; the ETS row counts only fossil carbon.</p>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3 id="ac-card-h">Aircraft data</h3><span class="note">inputs and calibration</span></div>
+          <dl class="kv" id="ac-kv"></dl>
+          <p class="foot" id="ac-src"></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FUEL ================= -->
+    <section class="view" id="view-fuel" role="tabpanel" aria-labelledby="tab-fuel">
+      <div class="view-head">
+        <div>
+          <h2>Fuel properties and the blend limit</h2>
+          <p class="lede">Synthetic paraffinic kerosene has no aromatics and a low density, so the finished blend must still meet the Jet A-1 specification.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Blend properties against the specification</h3><span class="note">ASTM D1655 / D7566, DEF STAN 91-091</span></div>
+        <div class="tw" id="prop-table"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>How far can you blend?</h3><span class="note" id="wall-note"></span></div>
+        <p class="foot" style="margin:-4px 0 12px" id="wall-lede"></p>
+        <div class="grid-2">
+          <div>
+            <div class="legend" id="wall-legend-rho"></div>
+            <div class="chart-box mid"><canvas id="ch-rho" role="img" aria-label="Blend density against SAF share"></canvas></div>
+          </div>
+          <div>
+            <div class="legend" id="wall-legend-arom"></div>
+            <div class="chart-box mid"><canvas id="ch-arom" role="img" aria-label="Blend aromatics against SAF share"></canvas></div>
+          </div>
+        </div>
+        <details class="tableview"><summary>Show data table</summary><div class="tw" id="tw-wall"></div></details>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Energy per kilogram against energy per litre</h3><span class="note">lower heating value basis</span></div>
+        <div class="legend" id="ed-legend"></div>
+        <div class="chart-box"><canvas id="ch-ed" role="img" aria-label="Specific energy against energy density for each fuel"></canvas></div>
+        <p class="foot">Liquid hydrogen sits far outside this frame: about 120 MJ/kg but only 8.5 MJ/L, roughly a quarter of Jet A-1 per litre, which is why it needs new, larger tanks and a new aircraft.</p>
+        <details class="tableview"><summary>Show data table</summary><div class="tw" id="tw-ed"></div></details>
+      </div>
+    </section>
+
+    <!-- ================= PATHWAYS ================= -->
+    <section class="view" id="view-pathways" role="tabpanel" aria-labelledby="tab-pathways">
+      <div class="view-head">
+        <div>
+          <h2>Pathways and feedstocks compared</h2>
+          <p class="lede">Every CORSIA feedstock option on your mission, at the same blend share and today's prices. Select a row to load it into your scenario.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-h"><h3>Life-cycle emissions by feedstock</h3><span class="note">gCO₂e/MJ, core LCA + land-use change</span></div>
+          <div class="legend" id="ci-legend"></div>
+          <div class="chart-box" id="ci-box" style="height:560px"><canvas id="ch-ci" role="img" aria-label="Life-cycle emissions by feedstock"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h3>Cost of each tonne of CO₂e avoided</h3><span class="note" id="ab-note"></span></div>
+          <div class="legend" id="ab-legend"></div>
+          <div class="chart-box" style="height:560px"><canvas id="ch-ab" role="img" aria-label="Abatement cost against emissions reduction"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>All options</h3><span class="note" id="rows-note"></span></div>
+        <div class="tw" id="rows-table"></div>
+        <p class="foot">HEFA is the only pathway with a traded market price. FT, ATJ and PtL prices are EASA reference or production-cost estimates, so they are not like-for-like with the HEFA market price. Change any pathway's price by selecting it and editing the SAF price.</p>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Liquid hydrogen, for reference</h3>
+          <label class="switch"><input type="checkbox" id="in-lh2"><span>Show</span></label></div>
+        <p class="foot" style="margin-top:0" id="lh2-lede">Not a drop-in fuel: it needs a new aircraft with cryogenic tanks. Shown only to place the drop-in options in context.</p>
+        <div id="lh2-body" hidden>
+          <div class="tiles-wrap" style="margin-top:12px"><div class="tiles c3" id="lh2-tiles"></div></div>
+          <div class="two" style="margin-top:12px;max-width:520px">
+            <div><label for="in-lh2-eta" class="hint">Tank gravimetric index</label><input id="in-lh2-eta" type="number" step="0.05" min="0.2" max="0.9"></div>
+            <div><label for="in-lh2-ld" class="hint">L/D penalty (%)</label><input id="in-lh2-ld" type="number" step="1" min="0" max="20"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MARKET ================= -->
+    <section class="view" id="view-market" role="tabpanel" aria-labelledby="tab-market">
+      <div class="view-head">
+        <div>
+          <h2>Market data</h2>
+          <p class="lede" id="market-lede">Prices feeding the calculator, where they come from, and how they have moved.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Jet fuel price history</h3><span class="note" id="hist-note"></span></div>
+        <div class="legend" id="hist-legend"></div>
+        <div class="chart-box tall"><canvas id="ch-hist" role="img" aria-label="Jet fuel price history"></canvas></div>
+        <p class="foot">The 2026 spike follows the closure of the Strait of Hormuz in late February 2026. IATA weekly points are those reported publicly; points marked ≈ have an inferred week.</p>
+        <details class="tableview"><summary>Show data table</summary><div class="tw" id="tw-hist"></div></details>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>Latest values in the feed</h3><span class="note" id="feed-note"></span></div>
+        <div class="tw" id="feed-table"></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><h3>SAF and policy price references</h3><span class="note">for context and the SAF price presets</span></div>
+        <div class="tw" id="ref-table"></div>
+      </div>
+    </section>
+
+    <!-- ================= METHOD ================= -->
+    <section class="view" id="view-method" role="tabpanel" aria-labelledby="tab-method">
+      <div class="card prose">
+        <h2 style="font:600 21px/1.2 var(--font-display)">Method</h2>
+        <p>The calculator follows the same chain as <em>aviation_fuel_model.py</em>: aircraft energy from the Breguet range equation, fuel cost, well-to-wake emissions, then the cost of each tonne of CO₂e avoided. It adds aircraft-specific calibration, a reserve-fuel model, live prices, blend properties checked against the fuel specification, and payload–range diagrams.</p>
+        <h3>1. Blend properties (volume blending, as in ASTM D7566)</h3>
+        <div class="eq">ρ_b   = φ·ρ_SAF + (1 − φ)·ρ_jet                (kg/m³)
+w     = φ·ρ_SAF / ρ_b                            (SAF mass fraction)
+LHV_b = w·LHV_SAF + (1 − w)·LHV_jet              (MJ/kg)
+e     = w·LHV_SAF / LHV_b                        (SAF energy fraction)
+CI_b  = e·CI_SAF + (1 − e)·89                    (gCO₂e/MJ)
+A_b   = φ·A_SAF + (1 − φ)·A_jet                  (aromatics, % vol)</div>
+        <h3>2. Aircraft performance</h3>
+        <div class="eq">R     = K · (LHV / g) · ln(m_TO / m_L),         K = η₀ · (L/D)
+BRF   = K · LHV / g
+f     = exp((R + R_allow) / BRF) − 1
+m_res = m_ZF · (exp(R_res / BRF) − 1)            alternate + final reserve
+trip  = (m_ZF + m_res) · f / (1 − c·f)          c = contingency fraction
+block = trip·(1 + c) + m_res,    TOW = m_ZF + block
+TSFC_b / TSFC_jet = LHV_jet / LHV_b              at equal η₀ and flight speed</div>
+        <p>K is solved for each aircraft so that Jet A-1 reproduces the manufacturer's quoted range at typical seating (100 kg per passenger including bags), at MTOW or full tanks. The same K is used for every drop-in fuel, so the model assumes η₀ and L/D do not change with the fuel. For the payload–range diagram the fuel load at each payload is the smaller of MTOW − m_ZF and tank volume × fuel density.</p>
+        <h3>3. Cost and emissions</h3>
+        <div class="eq">p_b       = w·p_SAF + (1 − w)·p_jet        $/t of blend
+cost      = trip · p_b
+CO₂e      = trip · LHV · CI                  well-to-wake
+CO₂_ETS   = trip · (1 − w) · 3.16            eligible SAF counts as zero
+ΔC        = cost_blend − cost_jet
+ΔE        = CO₂e_jet − CO₂e_blend
+abatement = ΔC / ΔE                          $/tCO₂e
+net       = ΔC − carbon price · ΔCO₂_ETS     (or · ΔE on a life-cycle basis)</div>
+        <p>The abatement cost equals the life-cycle carbon price at which the blend breaks even. The break-even SAF and jet prices solve net = 0 for p_SAF and p_jet. EU ETS zero-rating is applied only where the fuel's life-cycle saving is at least 65% (70% for e-fuels), approximating the RED II/III threshold; RED's own calculation excludes land-use change and uses a 94 gCO₂e/MJ comparator, so eligibility for a real batch can differ. Fuels below the threshold are charged like fossil kerosene.</p>
+        <h3>4. Assumptions and limits</h3>
+        <ul>
+          <li>Drop-in fuels change only LHV and density in the performance model. Engine efficiency, L/D and OEW are unchanged.</li>
+          <li>Reserves default to 5% contingency plus alternate and final reserve equivalent to 600 km of cruise, and 200 km of equivalent cruise for taxi, climb and descent. All editable under Advanced assumptions.</li>
+          <li>Airbus does not publish OEW; the values used are typical figures.</li>
+          <li>Life-cycle values are ICAO CORSIA defaults (core LCA + induced land-use change). Certified plants can claim lower actual values.</li>
+          <li>PtL e-SPK has no CORSIA default; its value is built up from the electricity intensity (0.70 kWh per MJ of fuel) plus 2 gCO₂e/MJ for plant and transport.</li>
+          <li>Density and aromatics blend linearly by volume. Freezing point, viscosity and thermal stability are not modelled.</li>
+          <li>Non-CO₂ effects are not included. SAF blends have fewer aromatics, which cuts soot and contrail ice crystals; this benefit is not credited here.</li>
+          <li>Mandate shares (ReFuelEU Aviation, UK SAF Mandate) are defined in the regulations' own terms; the blend chips apply them as volume shares for illustration.</li>
+          <li>Jet prices convert between units at IATA's factor of 7.897 barrels per tonne. Currencies convert at the ECB reference rate in the feed. EASA euro values convert at 1.161 $/€, the rate implied by EASA's 2025 dollar figures.</li>
+        </ul>
+        <h3>5. Live price feed</h3>
+        <p>The page reads data/feed.json from this site. A GitHub Action rewrites it on weekday mornings from the IATA Jet Fuel Price Monitor, EIA spot prices via FRED and ECB reference rates, and tries a public EU ETS quote. The SAF price and, if the automatic quote fails, the carbon price come from data/manual.json, which you edit by hand. If the file can't be loaded, the page uses its built-in snapshot and says so at the top.</p>
+        <h3>Sources</h3>
+        <ol class="src-list" id="src-list"></ol>
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer class="foot-page">
+  <span>C. Smallbone · BEng project, Loughborough University · companion to aviation_fuel_model.py</span>
+  <span id="foot-feed"></span>
+</footer>
+
+<script type="application/json" id="snapshot">{"schema":1,"updated_at":"2026-11-08T14:30:00Z","updated_by":"Initial snapshot, 8 Nov 2026","jet":{"iata":{"usd_bbl":191.54,"wow_pct":-2.6,"period":"latest week (≈ w/e 30 Oct 2026)","retrieved":"2026-11-08","source":"IATA Jet Fuel Price Monitor (S&P Global Platts data)","url":"https://www.iata.org/en/publications/economics/fuel-monitor/"},"usgc":{"usd_gal":4.198,"date":"2026-11-03","source":"U.S. EIA spot price via FRED (DJFUELUSGULF)","url":"https://fred.stlouisfed.org/series/DJFUELUSGULF"}},"carbon":{"eua_eur_t":90.16,"date":"2026-11-04","label":"EUA Dec-26 futures settlement","source":"Investing.com (EEX contract)","url":"https://www.investing.com/commodities/european-union-allowance-eua-year-futures-historical-data"},"saf":{"hefa_usd_t":2788,"period":"Q3 2026 average","source":"BloombergNEF, NW Europe SAF price","url":"https://www.bnef.com/insights/40591"},"fx":{"usd_per_eur":1.1165,"gbp_per_eur":0.83415,"date":"2026-11-06","source":"ECB euro reference rates","url":"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/eurofxref-graph-usd.en.html"},"history":{"usgc_monthly":[["2024-01",2.585],["2024-02",2.683],["2024-03",2.593],["2024-04",2.605],["2024-05",2.38],["2024-06",2.394],["2024-07",2.419],["2024-08",2.176],["2024-09",1.982],["2024-10",2.068],["2024-11",2.065],["2024-12",2.097],["2025-01",2.347],["2025-02",2.264],["2025-03",2.069],["2025-04",1.976],["2025-05",1.928],["2025-06",2.094],["2025-07",2.244],["2025-08",2.024],["2025-09",2.089],["2025-10",2.154],["2025-11",2.258],["2025-12",1.965],["2026-01",2.031],["2026-02",2.262],["2026-03",3.697],["2026-04",3.928],["2026-05",3.943],["2026-06",3.042],["2026-07",3.403],["2026-08",3.724],["2026-09",4.388],["2026-10",4.483]],"usgc_daily":[["2026-10-28",4.474],["2026-10-29",4.436],["2026-10-30",4.379],["2026-11-02",4.019],["2026-11-03",4.198]],"iata_weekly":[["2026-01-30",94.97,0],["2026-03-06",157.41,0],["2026-03-13",175.0,0],["2026-03-20",197.0,0],["2026-03-27",195.19,0],["2026-04-03",209.0,0],["2026-09-25",185.43,0],["2026-10-09",190.18,0],["2026-10-23",196.7,1],["2026-10-30",191.54,1]],"eua_daily":[["2026-10-29",89.2],["2026-10-30",89.19],["2026-11-02",90.52],["2026-11-03",89.93],["2026-11-04",90.16]]}}</script>
+<script src="vendor/chart.umd.js"></script>
+<script>
+/* SAF vs Jet A-1 dashboard: engineering + cost model.
+   Pure functions, no DOM. Units: kg, km, MJ, USD unless stated.
+   Method follows aviation_fuel_model.py (Breguet energy form, CORSIA LCA values,
+   abatement cost = extra fuel cost / CO2e avoided) with a fuller reserve model. */
+(function (root) {
+  'use strict';
+
+  const G = 9.81;
+  const L_PER_BBL = 158.987294928;
+  const GAL_PER_BBL = 42;
+  const L_PER_GAL = 3.785411784;
+  const BBL_PER_T = 7.8967;   // IATA / Platts jet conversion (implies 0.7965 kg/L)
+  const EF_JET = 3.16;        // kg CO2 per kg Jet A-1 burned (ICAO CORSIA)
+  const CI_JET = 89.0;        // gCO2e/MJ, CORSIA fossil jet baseline
+
+  // ASTM D1655 / D7566 limits used for the blend check
+  const SPEC = { rhoMin: 775, rhoMax: 840, aromMin: 8, aromMax: 25, lhvMin: 42.8 };
+
+  // Aircraft. rangePub is the manufacturer's quoted range at typical seating;
+  // it is used to calibrate the overall efficiency x L/D product (K) of each type.
+  const AIRCRAFT = [
+    { id: 'a20n', name: 'Airbus A320neo', short: 'A320neo', cls: 'narrow',
+      mtow: 79000, mzfw: 64300, oew: 44300, fuelL: 26730, seats: 165, rangePub: 6300,
+      mission: 2000, flights: 1300,
+      src: 'Airbus key figures: MTOW 79.0 t, MZFW 64.3 t, 26,730 L, 6,300 km. OEW ≈ 44.3 t is a typical value (Airbus does not publish OEW).' },
+    { id: 'b38m', name: 'Boeing 737-8', short: '737-8', cls: 'narrow',
+      mtow: 82191, mzfw: 65952, oew: 45070, fuelL: 25816, seats: 162, rangePub: 6570,
+      mission: 2000, flights: 1300,
+      src: 'Boeing 737 MAX ACAPS: MTOW 181,200 lb, MZFW 145,400 lb, OEW 99,360 lb, 6,820 US gal; range 3,550 nmi.' },
+    { id: 'a21n', name: 'Airbus A321LR', short: 'A321LR', cls: 'narrow',
+      mtow: 97000, mzfw: 75600, oew: 50100, fuelL: 32940, seats: 206, rangePub: 7400,
+      mission: 3000, flights: 1000,
+      src: 'Airbus A321neo (LR): MTOW 97.0 t, MZFW 75.6 t, 32,940 L incl. additional centre tank, 7,400 km. OEW ≈ 50.1 t typical.' },
+    { id: 'b789', name: 'Boeing 787-9', short: '787-9', cls: 'wide',
+      mtow: 254011, mzfw: 181437, oew: 128850, fuelL: 126372, seats: 296, rangePub: 14010,
+      mission: 9000, flights: 420,
+      src: 'Boeing 787-9: MTOW 560,000 lb, MZFW 400,000 lb, OEW 284,000 lb, 126,372 L, 7,565 nmi with 296 passengers.' },
+    { id: 'a359', name: 'Airbus A350-900', short: 'A350-900', cls: 'wide',
+      mtow: 283000, mzfw: 195700, oew: 142400, fuelL: 166488, seats: 340, rangePub: 15750,
+      mission: 10000, flights: 380,
+      src: 'Airbus key figures: MTOW 283.0 t, MZFW 195.7 t, 166,488 L, 15,750 km, 332–352 seats. OEW ≈ 142.4 t typical.' }
+  ];
+
+  // Feedstock life-cycle values: ICAO CORSIA default LCA values (June 2025 edition).
+  // core + ILUC = LSf in gCO2e/MJ. Region-specific ILUC where the table requires one.
+  const PATHWAYS = {
+    HEFA: {
+      id: 'HEFA', name: 'HEFA-SPK', long: 'Hydroprocessed esters and fatty acids',
+      annex: 'ASTM D7566 Annex A2', maxBlend: 50, lhv: 44.1, rho: 760, arom: 0, ef: 3.10,
+      status: 'Commercial; almost all SAF supplied today',
+      feedstocks: [
+        { id: 'uco', name: 'Used cooking oil', core: 13.9, iluc: 0 },
+        { id: 'corn-oil', name: 'Distillers corn oil', core: 17.2, iluc: 0 },
+        { id: 'pfad', name: 'Palm fatty acid distillate', core: 20.7, iluc: 0 },
+        { id: 'tallow', name: 'Tallow', core: 22.5, iluc: 0 },
+        { id: 'carinata', name: 'Carinata (global)', core: 34.4, iluc: -10.8 },
+        { id: 'camelina', name: 'Camelina (global)', core: 42.0, iluc: -11.5 },
+        { id: 'soy', name: 'Soybean oil (global)', core: 40.4, iluc: 22.5 },
+        { id: 'rapeseed', name: 'Rapeseed oil (EU)', core: 47.4, iluc: 22.8 },
+        { id: 'palm-closed', name: 'Palm oil, closed pond (MY/ID)', core: 37.4, iluc: 36.6 },
+        { id: 'palm-open', name: 'Palm oil, open pond (MY/ID)', core: 60.0, iluc: 36.6 }
+      ]
+    },
+    FT: {
+      id: 'FT', name: 'FT-SPK', long: 'Gasification + Fischer–Tropsch',
+      annex: 'ASTM D7566 Annex A1', maxBlend: 50, lhv: 44.2, rho: 750, arom: 0, ef: 3.10,
+      status: 'First-of-a-kind plants',
+      feedstocks: [
+        { id: 'msw', name: 'Municipal solid waste (0% fossil C)', core: 5.2, iluc: 0 },
+        { id: 'ag-res', name: 'Agricultural residues', core: 7.7, iluc: 0 },
+        { id: 'for-res', name: 'Forestry residues', core: 8.3, iluc: 0 },
+        { id: 'miscanthus', name: 'Miscanthus (EU)', core: 10.4, iluc: -9.0 },
+        { id: 'poplar', name: 'Poplar (global)', core: 12.2, iluc: 8.9 }
+      ]
+    },
+    ATJ: {
+      id: 'ATJ', name: 'ATJ-SPK', long: 'Alcohol-to-jet',
+      annex: 'ASTM D7566 Annex A5', maxBlend: 50, lhv: 43.9, rho: 760, arom: 0, ef: 3.10,
+      status: 'First commercial plants',
+      feedstocks: [
+        { id: 'for-res-ib', name: 'Forestry residues (isobutanol)', core: 23.8, iluc: 0 },
+        { id: 'ag-res-ib', name: 'Agricultural residues (isobutanol)', core: 29.3, iluc: 0 },
+        { id: 'cane-eth', name: 'Sugarcane, Brazil (ethanol, integrated)', core: 24.1, iluc: 8.7 },
+        { id: 'cane-ib', name: 'Sugarcane, Brazil (isobutanol)', core: 24.0, iluc: 9.2 },
+        { id: 'corn-eth', name: 'Corn grain, USA (ethanol)', core: 54.1, iluc: 18.3 },
+        { id: 'corn-ib', name: 'Corn grain, USA (isobutanol)', core: 55.8, iluc: 17.1 }
+      ]
+    },
+    PTL: {
+      id: 'PTL', name: 'PtL e-SPK', long: 'Power-to-liquid (electrolysis, CO2 capture, RWGS + FT)',
+      annex: 'ASTM D7566 Annex A1 (FT route)', maxBlend: 50, lhv: 44.2, rho: 750, arom: 0, ef: 3.10,
+      status: 'Demonstration scale',
+      feedstocks: [
+        { id: 'ptl', name: 'Renewable electricity + captured CO2', computed: true }
+      ]
+    }
+  };
+  const PATHWAY_ORDER = ['HEFA', 'FT', 'ATJ', 'PTL'];
+
+  // SAF price presets, USD per tonne. EASA euro values converted at 1.161 $/EUR,
+  // the rate implied by EASA's own 2025 dollar figures.
+  const USD_PER_EUR_2025 = 1.161;
+  const PRICE_PRESETS = {
+    HEFA: [
+      { id: 'feed', label: 'Market, NW Europe', feedKey: 'hefa', note: 'BloombergNEF NW Europe SAF price (latest in feed)' },
+      { id: 'platts', label: 'Platts 11 Mar 2026', usd: 2640, note: 'Platts HEFA-SPK CIF NW Europe, 11 Mar 2026' },
+      { id: 'easa25', label: 'EASA 2025 ref.', usd: Math.round(1925 * USD_PER_EUR_2025), note: 'EASA 2025 reference price, aviation biofuels, €1,925/t' }
+    ],
+    FT: [
+      { id: 'easa25adv', label: 'EASA 2025 advanced', usd: Math.round(3036 * USD_PER_EUR_2025), note: 'EASA 2025 reference price, advanced aviation biofuels, €3,036/t' },
+      { id: 'icao', label: 'nth-plant (ICAO)', usd: Math.round(2.0 / 0.75 * 1000), note: 'ICAO SAF rules of thumb, FT minimum selling price, central $2.0/L' }
+    ],
+    ATJ: [
+      { id: 'easa25adv', label: 'EASA 2025 advanced', usd: Math.round(3036 * USD_PER_EUR_2025), note: 'EASA 2025 reference price, advanced aviation biofuels, €3,036/t' },
+      { id: 'icao', label: 'nth-plant (ICAO)', usd: Math.round(1.5 / 0.76 * 1000), note: 'ICAO SAF rules of thumb, ATJ minimum selling price, central $1.5/L' }
+    ],
+    PTL: [
+      { id: 'easa25syn', label: 'EASA 2025 estimate', usd: Math.round(7520 * USD_PER_EUR_2025), note: 'EASA 2025 production-cost estimate, synthetic aviation fuels, €7,520/t' },
+      { id: 'bottomup', label: 'Bottom-up 2030', computedKey: 'ptl', note: 'Levelised cost from the central inputs of aviation_fuel_model.py' }
+    ]
+  };
+
+  // Electrolysis inputs (central values of aviation_fuel_model.py, ICCT 2022)
+  const ELECTRO = { elec: 51, capex: 1167, kwhKg: 52, cf: 0.45, wacc: 0.08, life: 20, om: 0.03,
+    ptlH2: 0.50, ptlCO2: 3.5, co2Cost: 250, ptlConv: 0.6, ptlOtherKwh: 5.0,
+    liqKwh: 10.0, liqCapex: 1.0, dist: 0.3, lh2Loss: 0.03, ciFixed: 2.0 };
+
+  const DEFAULT_ADV = { cont: 0.05, rResKm: 600, rAllowKm: 200, paxMass: 100,
+    jet: { lhv: 43.2, rho: 800, arom: 17.5 } };
+
+  // ---------------------------------------------------------------- helpers
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  function crf(i, n) { const q = Math.pow(1 + i, n); return i * q / (q - 1); }
+
+  function lcoh(e) {
+    const kgPerKwYr = 8760 * e.cf / e.kwhKg;
+    return e.capex * (crf(e.wacc, e.life) + e.om) / kgPerKwYr + e.elec / 1000 * e.kwhKg;
+  }
+  function ptlCostUsdT(e) {
+    return (e.ptlH2 * lcoh(e) + e.ptlCO2 * e.co2Cost / 1000 + e.ptlConv) * 1000;
+  }
+  function lh2CostUsdT(e) {
+    return (lcoh(e) + e.liqKwh * e.elec / 1000 + e.liqCapex + e.dist) / (1 - e.lh2Loss) * 1000;
+  }
+  function ptlCI(gridG, e) {
+    const kwhPerKg = e.ptlH2 * e.kwhKg + e.ptlOtherKwh;
+    return gridG * kwhPerKg / PATHWAYS.PTL.lhv + e.ciFixed;
+  }
+  function lh2CI(gridG, e) {
+    const kwhPerKg = (e.kwhKg + e.liqKwh) / (1 - e.lh2Loss);
+    return gridG * kwhPerKg / 120 + e.ciFixed;
+  }
+
+  function feedstockCI(pathwayId, feedstockId, gridG) {
+    const p = PATHWAYS[pathwayId];
+    const f = p.feedstocks.find(x => x.id === feedstockId) || p.feedstocks[0];
+    if (f.computed) return { total: ptlCI(gridG, ELECTRO), core: ptlCI(gridG, ELECTRO), iluc: 0, f };
+    return { total: f.core + f.iluc, core: f.core, iluc: f.iluc, f };
+  }
+
+  // ------------------------------------------------------- blend properties
+  // EU ETS zero-rating needs the fuel to meet the RED GHG-saving threshold:
+  // 65% for biofuels from new plants, 70% for RFNBOs (e-fuels). Approximated with
+  // the CORSIA life-cycle value; a fuel below it is charged like fossil kerosene.
+  function etsEligible(pathwayId, ci) {
+    const red = (CI_JET - ci) / CI_JET;
+    return red >= (pathwayId === 'PTL' ? 0.70 : 0.65);
+  }
+
+  function blendProps(jet, saf, phi) {
+    const rho = phi * saf.rho + (1 - phi) * jet.rho;
+    const w = rho > 0 ? phi * saf.rho / rho : 0;            // SAF mass fraction
+    const lhv = w * saf.lhv + (1 - w) * jet.lhv;
+    const e = lhv > 0 ? w * saf.lhv / lhv : 0;              // SAF energy fraction
+    const arom = phi * saf.arom + (1 - phi) * jet.arom;
+    const ci = e * saf.ci + (1 - e) * jet.ci;
+    const zero = saf.etsEligible !== false;
+    return { phi, w, e, rho, lhv, arom, ci, mjL: lhv * rho / 1000, etsZero: zero,
+      efFossil: (zero ? 1 - w : 1) * EF_JET, efPhys: w * saf.ef + (1 - w) * EF_JET };
+  }
+
+  function specCheck(b, maxBlend) {
+    const out = [];
+    out.push({ key: 'rho', label: 'Density at 15 °C', value: b.rho, unit: 'kg/m³',
+      limit: '775–840', ok: b.rho >= SPEC.rhoMin - 1e-9 && b.rho <= SPEC.rhoMax });
+    out.push({ key: 'arom', label: 'Aromatics', value: b.arom, unit: '% vol',
+      limit: b.phi > 0 ? '8–25 (D7566)' : '≤ 25',
+      ok: b.arom <= SPEC.aromMax && (b.phi === 0 || b.arom >= SPEC.aromMin - 1e-9) });
+    out.push({ key: 'lhv', label: 'Net heat of combustion', value: b.lhv, unit: 'MJ/kg',
+      limit: '≥ 42.8', ok: b.lhv >= SPEC.lhvMin });
+    out.push({ key: 'blend', label: 'Synthetic share', value: b.phi * 100, unit: '% vol',
+      limit: '≤ ' + maxBlend, ok: b.phi * 100 <= maxBlend + 1e-9 });
+    return out;
+  }
+
+  function maxBlend(jet, saf, annexMax) {
+    let byRho = 1, byArom = 1;
+    if (saf.rho < SPEC.rhoMin && jet.rho > saf.rho) byRho = clamp((jet.rho - SPEC.rhoMin) / (jet.rho - saf.rho), 0, 1);
+    if (saf.arom < SPEC.aromMin && jet.arom > saf.arom) byArom = clamp((jet.arom - SPEC.aromMin) / (jet.arom - saf.arom), 0, 1);
+    const byAnnex = annexMax / 100;
+    const lim = Math.min(byRho, byArom, byAnnex);
+    const binding = lim === byAnnex ? 'annex' : (lim === byRho ? 'density' : 'aromatics');
+    return { byRho, byArom, byAnnex, max: lim, binding };
+  }
+
+  // ------------------------------------------------- aircraft performance
+  // Breguet range, energy form: R = K * (LHV/g) * ln(m_TO / m_L), K = eta0 * L/D.
+  // Reserves: contingency = cont * trip (carried, not burned) plus alternate + final
+  // reserve flown at cruise efficiency over rResKm. Taxi/climb/descent: +rAllowKm.
+  function brf(K, lhv) { return K * lhv * 1e6 / G; }          // metres
+
+  function mission(ac, K, fuel, payload, rangeKm, adv, extraMass) {
+    const B = brf(K, fuel.lhv);
+    const mzf = ac.oew + payload + (extraMass || 0);
+    const mRes = mzf * (Math.exp(adv.rResKm * 1e3 / B) - 1);
+    const f = Math.exp((rangeKm + adv.rAllowKm) * 1e3 / B) - 1;
+    const denom = 1 - adv.cont * f;
+    const trip = denom > 0 ? (mzf + mRes) * f / denom : Infinity;
+    const block = trip * (1 + adv.cont) + mRes;
+    const tow = mzf + block;
+    const kgPerL = fuel.rho / 1000;
+    const blockL = block / kgPerL;
+    return { trip, block, reserve: block - trip, mRes, tow, mzf, payload,
+      energy: trip * fuel.lhv, tripL: trip / kgPerL, blockL,
+      okMTOW: tow <= ac.mtow + 0.5, okVol: blockL <= ac.fuelL + 0.5,
+      okPayload: payload <= ac.mzfw - ac.oew + 0.5 };
+  }
+
+  function rangeAt(ac, K, fuel, payload, adv, extraMass, volLimitL) {
+    const B = brf(K, fuel.lhv);
+    const mzf = ac.oew + payload + (extraMass || 0);
+    const mRes = mzf * (Math.exp(adv.rResKm * 1e3 / B) - 1);
+    const cap = (volLimitL == null ? ac.fuelL : volLimitL) * fuel.rho / 1000;
+    const avail = Math.min(ac.mtow - mzf, cap);
+    if (avail <= mRes) return 0;
+    const trip = (avail - mRes) / (1 + adv.cont);
+    const mTO = mzf + avail;
+    const R = B * Math.log(mTO / (mTO - trip)) / 1e3 - adv.rAllowKm;
+    return Math.max(0, R);
+  }
+
+  function calibrateK(ac, jet, adv) {
+    const payload = ac.seats * adv.paxMass;
+    let lo = 2, hi = 15;
+    for (let i = 0; i < 80; i++) {
+      const mid = (lo + hi) / 2;
+      if (rangeAt(ac, mid, jet, payload, adv) < ac.rangePub) lo = mid; else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  function payloadRange(ac, K, fuel, adv, n) {
+    const pMax = ac.mzfw - ac.oew;
+    const pts = [{ x: 0, y: pMax / 1000 }];
+    const N = n || 48;
+    for (let i = 0; i <= N; i++) {
+      const p = pMax * (1 - i / N);
+      pts.push({ x: rangeAt(ac, K, fuel, p, adv), y: p / 1000 });
+    }
+    return pts;
+  }
+
+  // LH2 reference aircraft: tank mass = k * block fuel (gravimetric index), L/D penalty,
+  // tank sized for the mission flown (best case). Mirrors aviation_fuel_model.py.
+  function lh2Mission(ac, K, payload, rangeKm, adv, opt) {
+    const fuel = { lhv: 120, rho: 70.8 };
+    const k = 1 / opt.etaGrav - 1;
+    const Kh = K * (1 - opt.ldPen);
+    let extra = 0, m = null;
+    for (let i = 0; i < 60; i++) {
+      m = mission(ac, Kh, fuel, payload, rangeKm, adv, extra);
+      const next = k * m.block;
+      if (Math.abs(next - extra) < 0.01) { extra = next; break; }
+      extra = next;
+    }
+    m = mission(ac, Kh, fuel, payload, rangeKm, adv, extra);
+    m.tankMass = extra;
+    m.tankM3 = m.block / fuel.rho / (1 - 0.07);
+    m.okVol = true;
+    return m;
+  }
+
+  // ------------------------------------------------------------- economics
+  function economics(mj, mb, jet, b, pJ, pS, carbon) {
+    const pB = b.w * pS + (1 - b.w) * pJ;
+    const costJ = mj.trip / 1000 * pJ;
+    const costB = mb.trip / 1000 * pB;
+    const ghgJ = mj.trip * jet.lhv * jet.ci / 1e6;
+    const ghgB = mb.trip * b.lhv * b.ci / 1e6;
+    const etsJ = mj.trip * EF_JET / 1000;
+    const etsB = mb.trip * b.efFossil / 1000;
+    const dCost = costB - costJ, dGhg = ghgJ - ghgB, dEts = etsJ - etsB;
+    const basisAvoided = carbon.basis === 'ets' ? dEts : dGhg;
+    const carbonSaving = carbon.on ? basisAvoided * carbon.price : 0;
+    const carbonCostJ = carbon.on ? (carbon.basis === 'ets' ? etsJ : ghgJ) * carbon.price : 0;
+    const carbonCostB = carbon.on ? (carbon.basis === 'ets' ? etsB : ghgB) * carbon.price : 0;
+    const net = dCost - carbonSaving;
+    const abate = dGhg > 1e-9 ? dCost / dGhg : NaN;
+    const beCarbon = basisAvoided > 1e-9 ? dCost / basisAvoided : NaN;
+    let beSaf = NaN, beJet = NaN;
+    if (b.w > 1e-9) {
+      beSaf = ((costJ + carbonSaving) * 1000 / mb.trip - (1 - b.w) * pJ) / b.w;
+      const slope = (mj.trip - mb.trip * (1 - b.w)) / 1000;
+      if (slope > 1e-9) beJet = (mb.trip * b.w * pS / 1000 - carbonSaving) / slope;
+    }
+    return { pB, costJ, costB, ghgJ, ghgB, etsJ, etsB, dCost, dGhg, dEts,
+      carbonSaving, carbonCostJ, carbonCostB, net, abate, beCarbon, beSaf, beJet,
+      safKg: mb.trip * b.w, fossilKgB: mb.trip * (1 - b.w),
+      redPct: ghgJ > 0 ? dGhg / ghgJ * 100 : 0 };
+  }
+
+  // Break-even carbon price as a function of the jet price (linear in pJ)
+  function breakEvenCurve(mj, mb, b, pS, basis, jetFrom, jetTo, n) {
+    const out = [];
+    const N = n || 60;
+    const avoided = basis === 'ets'
+      ? (mj.trip - mb.trip * (1 - b.w)) * EF_JET / 1000
+      : null;
+    for (let i = 0; i <= N; i++) {
+      const pJ = jetFrom + (jetTo - jetFrom) * i / N;
+      const dCost = mb.trip / 1000 * (b.w * pS + (1 - b.w) * pJ) - mj.trip / 1000 * pJ;
+      out.push({ pJ, dCost, avoidedEts: avoided });
+    }
+    return out;
+  }
+
+  // ------------------------------------------------------------ top level
+  function compute(inp, market) {
+    const adv = Object.assign({}, DEFAULT_ADV, inp.adv || {});
+    adv.jet = Object.assign({}, DEFAULT_ADV.jet, (inp.adv || {}).jet || {});
+    const ac = AIRCRAFT.find(a => a.id === inp.acId) || AIRCRAFT[0];
+    const jet = { lhv: adv.jet.lhv, rho: adv.jet.rho, arom: adv.jet.arom, ci: CI_JET, ef: EF_JET };
+    const K = calibrateK(ac, jet, adv);
+
+    const P = PATHWAYS[inp.pathway] || PATHWAYS.HEFA;
+    const fci = feedstockCI(P.id, inp.feedstockId, inp.gridG);
+    const safOverride = (inp.adv && inp.adv.saf) || {};
+    const saf = { lhv: safOverride.lhv || P.lhv, rho: safOverride.rho || P.rho, arom: P.arom,
+      ci: fci.total, ef: P.ef, etsEligible: etsEligible(P.id, fci.total) };
+    const phi = clamp(inp.blendPct / 100, 0, 1);
+    const b = blendProps(jet, saf, phi);
+    const neat = blendProps(jet, saf, 1);
+    const pax = Math.round(inp.seats * inp.lf);
+    const payload = pax * adv.paxMass + (inp.cargoKg || 0);
+
+    const mj = mission(ac, K, jet, payload, inp.rangeKm, adv);
+    const mb = mission(ac, K, b, payload, inp.rangeKm, adv);
+    const mn = mission(ac, K, neat, payload, inp.rangeKm, adv);
+
+    const carbon = { on: !!inp.carbonOn, price: inp.carbonUsdT, basis: inp.carbonBasis };
+    const ec = economics(mj, mb, jet, b, inp.jetUsdT, inp.safUsdT, carbon);
+    const ecNeat = economics(mj, mn, jet, neat, inp.jetUsdT, inp.safUsdT, carbon);
+    const nFlights = inp.flightsPerYear * inp.fleet;
+
+    const pr = {
+      jet: payloadRange(ac, K, jet, adv),
+      blend: phi > 0 ? payloadRange(ac, K, b, adv) : null,
+      neat: payloadRange(ac, K, neat, adv)
+    };
+    const ferry = { jet: rangeAt(ac, K, jet, 0, adv), blend: rangeAt(ac, K, b, 0, adv), neat: rangeAt(ac, K, neat, 0, adv) };
+    const pMaxRange = { jet: rangeAt(ac, K, jet, ac.mzfw - ac.oew, adv), blend: rangeAt(ac, K, b, ac.mzfw - ac.oew, adv), neat: rangeAt(ac, K, neat, ac.mzfw - ac.oew, adv) };
+
+    // Pathway comparison at the same mission and blend share
+    const phiCmp = phi > 0 ? phi : 0.1;
+    const rows = [];
+    PATHWAY_ORDER.forEach(pid => {
+      const PP = PATHWAYS[pid];
+      const price = (inp.pathwayPrices && inp.pathwayPrices[pid]) || inp.safUsdT;
+      PP.feedstocks.forEach(fs => {
+        const c = feedstockCI(pid, fs.id, inp.gridG);
+        const elig = etsEligible(pid, c.total);
+        const s = { lhv: PP.lhv, rho: PP.rho, arom: PP.arom, ci: c.total, ef: PP.ef, etsEligible: elig };
+        const bb = blendProps(jet, s, phiCmp);
+        const mm = mission(ac, K, bb, payload, inp.rangeKm, adv);
+        const ee = economics(mj, mm, jet, bb, inp.jetUsdT, price, carbon);
+        rows.push({ pathway: pid, pathwayName: PP.name, feedstock: fs.id, feedstockName: fs.name,
+          ci: c.total, core: c.core, iluc: c.iluc, red: (CI_JET - c.total) / CI_JET * 100,
+          price, priceGJ: price / PP.lhv, abate: ee.abate, etsEligible: elig,
+          beCarbonEts: elig && ee.dEts > 0 ? ee.dCost / ee.dEts : NaN,
+          selected: pid === P.id && fs.id === fci.f.id });
+      });
+    });
+
+    let lh2 = null;
+    if (inp.showLH2) {
+      const opt = { etaGrav: inp.lh2EtaGrav || 0.5, ldPen: inp.lh2LdPen == null ? 0.05 : inp.lh2LdPen };
+      const mh = lh2Mission(ac, K, payload, inp.rangeKm, adv, opt);
+      const ciH = lh2CI(inp.gridG, ELECTRO);
+      const priceH = inp.lh2UsdT || lh2CostUsdT(ELECTRO);
+      const hb = { w: 1, lhv: 120, ci: ciH };
+      const costH = mh.trip / 1000 * priceH;
+      const ghgH = mh.trip * 120 * ciH / 1e6;
+      const dCost = costH - ec.costJ, dGhg = ec.ghgJ - ghgH;
+      lh2 = { m: mh, ci: ciH, price: priceH, priceGJ: priceH / 120, cost: costH, ghg: ghgH,
+        energyRatio: mh.energy / mj.energy, abate: dGhg > 0 ? dCost / dGhg : NaN,
+        red: (CI_JET - ciH) / CI_JET * 100, opt, hb };
+    }
+
+    return {
+      ac, K, adv, jet, saf, P, fci, b, neat, phi, pax, payload,
+      m: { jet: mj, blend: mb, neat: mn }, ec, ecNeat, nFlights,
+      annual: {
+        dCost: ec.dCost * nFlights, dGhg: ec.dGhg * nFlights, dEts: ec.dEts * nFlights,
+        carbonSaving: ec.carbonSaving * nFlights, net: ec.net * nFlights,
+        safT: ec.safKg * nFlights / 1000, safM3: ec.safKg / saf.rho * nFlights,
+        ghgJ: ec.ghgJ * nFlights, costJ: ec.costJ * nFlights
+      },
+      perPax: { net: ec.net / Math.max(1, pax), dCost: ec.dCost / Math.max(1, pax),
+        ghgAvoidedKg: ec.dGhg * 1000 / Math.max(1, pax) },
+      pr, ferry, pMaxRange, rows, lh2,
+      spec: specCheck(b, P.maxBlend), wall: maxBlend(jet, saf, P.maxBlend),
+      tsfcRatio: jet.lhv / b.lhv
+    };
+  }
+
+  // ------------------------------------------------------------ units
+  const conv = {
+    usdTtoBbl: v => v / BBL_PER_T,
+    bblToUsdT: v => v * BBL_PER_T,
+    usdTtoGal: v => v / BBL_PER_T / GAL_PER_BBL,
+    galToUsdT: v => v * GAL_PER_BBL * BBL_PER_T,
+    usdTtoL: v => v / BBL_PER_T / L_PER_BBL,
+    usdTtoGJ: (v, lhv) => v / lhv
+  };
+
+  const api = { G, L_PER_BBL, GAL_PER_BBL, L_PER_GAL, BBL_PER_T, EF_JET, CI_JET, SPEC,
+    AIRCRAFT, PATHWAYS, PATHWAY_ORDER, PRICE_PRESETS, ELECTRO, DEFAULT_ADV, USD_PER_EUR_2025,
+    lcoh, ptlCostUsdT, lh2CostUsdT, ptlCI, lh2CI, feedstockCI, etsEligible, blendProps, specCheck, maxBlend,
+    brf, mission, rangeAt, calibrateK, payloadRange, lh2Mission, economics, breakEvenCurve,
+    compute, conv };
+  root.FuelModel = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+/* SAF vs Jet A-1 dashboard: UI, live feed, charts. Depends on window.FuelModel and Chart.js. */
+(function () {
+  'use strict';
+  const M = window.FuelModel;
+  const $ = id => document.getElementById(id);
+  const FONT = "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif";
+  const MINUS = '−';
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const ICON = {
+    check: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 8.5l3 3 7-7"/></svg>',
+    alert: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M8 1.8l6.6 11.7H1.4z"/><path d="M8 6.2v3.4M8 11.6v.2"/></svg>',
+    cross: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+    clock: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6V8l2.4 1.5"/></svg>',
+    plug: '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M5.5 10.5l5-5"/></svg>'
+  };
+
+  // ------------------------------------------------------------------ feed
+  function readSnapshot() {
+    try { return JSON.parse($('snapshot').textContent); } catch (e) { return null; }
+  }
+  const SNAPSHOT = readSnapshot();
+  let feed = JSON.parse(JSON.stringify(SNAPSHOT));
+  let feedMode = 'snapshot';        // snapshot | connecting | live | stale | error
+  let feedNote = '';
+
+  const isNum = (v, lo, hi) => typeof v === 'number' && isFinite(v) && v >= lo && v <= hi;
+  const isStr = v => typeof v === 'string' && v.length < 300;
+  const isDate = v => typeof v === 'string' && /^\d{4}-\d{2}(-\d{2})?$/.test(v);
+  const safeUrl = v => (typeof v === 'string' && /^https:\/\/[^\s"'<>]+$/.test(v) && v.length < 400) ? v : null;
+
+  function mergeFeed(d) {
+    const out = JSON.parse(JSON.stringify(SNAPSHOT));
+    if (!d || typeof d !== 'object') return out;
+    const copyStr = (dst, src, keys) => keys.forEach(k => { if (isStr(src[k])) dst[k] = src[k]; });
+    try {
+      if (d.jet && d.jet.iata && isNum(d.jet.iata.usd_bbl, 20, 600)) {
+        out.jet.iata.usd_bbl = d.jet.iata.usd_bbl;
+        out.jet.iata.wow_pct = isNum(d.jet.iata.wow_pct, -80, 300) ? d.jet.iata.wow_pct : null;
+        copyStr(out.jet.iata, d.jet.iata, ['period', 'retrieved', 'source']);
+        out.jet.iata.url = safeUrl(d.jet.iata.url) || out.jet.iata.url;
+      }
+      if (d.jet && d.jet.usgc && isNum(d.jet.usgc.usd_gal, 0.3, 15) && isDate(d.jet.usgc.date)) {
+        out.jet.usgc.usd_gal = d.jet.usgc.usd_gal; out.jet.usgc.date = d.jet.usgc.date;
+        copyStr(out.jet.usgc, d.jet.usgc, ['source']);
+        out.jet.usgc.url = safeUrl(d.jet.usgc.url) || out.jet.usgc.url;
+      }
+      if (d.carbon && isNum(d.carbon.eua_eur_t, 1, 600) && isDate(d.carbon.date)) {
+        out.carbon.eua_eur_t = d.carbon.eua_eur_t; out.carbon.date = d.carbon.date;
+        copyStr(out.carbon, d.carbon, ['label', 'source']);
+        out.carbon.url = safeUrl(d.carbon.url) || out.carbon.url;
+      }
+      if (d.saf && isNum(d.saf.hefa_usd_t, 300, 15000)) {
+        out.saf.hefa_usd_t = d.saf.hefa_usd_t;
+        copyStr(out.saf, d.saf, ['period', 'source']);
+        out.saf.url = safeUrl(d.saf.url) || out.saf.url;
+      }
+      if (d.fx && isNum(d.fx.usd_per_eur, 0.5, 2.5) && isNum(d.fx.gbp_per_eur, 0.4, 1.6)) {
+        out.fx.usd_per_eur = d.fx.usd_per_eur; out.fx.gbp_per_eur = d.fx.gbp_per_eur;
+        if (isDate(d.fx.date)) out.fx.date = d.fx.date;
+      }
+      if (isStr(d.updated_at) && !isNaN(Date.parse(d.updated_at))) out.updated_at = d.updated_at;
+      if (isStr(d.updated_by)) out.updated_by = d.updated_by;
+      const h = d.history || {};
+      const series = (arr, lo, hi, maxLen) => Array.isArray(arr)
+        ? arr.filter(p => Array.isArray(p) && isDate(p[0]) && isNum(p[1], lo, hi)).slice(-maxLen) : null;
+      const um = series(h.usgc_monthly, 0.3, 15, 240); if (um && um.length) out.history.usgc_monthly = um;
+      const ud = series(h.usgc_daily, 0.3, 15, 400); if (ud && ud.length) out.history.usgc_daily = ud;
+      const iw = series(h.iata_weekly, 20, 600, 400); if (iw && iw.length) out.history.iata_weekly = iw;
+      const ed = series(h.eua_daily, 1, 600, 400); if (ed && ed.length) out.history.eua_daily = ed;
+    } catch (e) { /* keep snapshot values */ }
+    return out;
+  }
+
+  function feedAgeDays() {
+    const t = Date.parse(feed.updated_at);
+    return isNaN(t) ? Infinity : (Date.now() - t) / 864e5;
+  }
+
+  async function connectFeed() {
+    setFeedMode('connecting');
+    try {
+      const res = await fetch('data/feed.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      feed = mergeFeed(await res.json());
+      feedNote = '';
+      setFeedMode(feedAgeDays() > 4 ? 'stale' : 'live');
+    } catch (e) {
+      feedNote = 'The price file could not be loaded; showing the built-in snapshot.';
+      setFeedMode('snapshot');
+    }
+    schedule();
+  }
+
+  function setFeedMode(m) { feedMode = m; renderFeedStatus(); }
+
+  // ----------------------------------------------------------- formatting
+  const CUR = { USD: '$', GBP: '£', EUR: '€' };
+  const UNIT_LABEL = { t: 't', bbl: 'bbl', gal: 'US gal', L: 'L', GJ: 'GJ' };
+  const UNIT_DP = { t: 0, bbl: 2, gal: 3, L: 3, GJ: 2 };
+
+  function curF() {
+    const ue = feed.fx.usd_per_eur, ge = feed.fx.gbp_per_eur;
+    return state.currency === 'EUR' ? 1 / ue : state.currency === 'GBP' ? ge / ue : 1;
+  }
+  const sym = () => CUR[state.currency];
+  function fmt(v, d) {
+    if (v == null || !isFinite(v)) return '—';
+    const s = Math.abs(v).toLocaleString('en-GB', { minimumFractionDigits: d || 0, maximumFractionDigits: d || 0 });
+    return (v < 0 && Number(s.replace(/,/g, '')) !== 0 ? MINUS : '') + s;
+  }
+  function fmtSigned(v, d) {
+    if (v == null || !isFinite(v)) return '—';
+    const s = fmt(Math.abs(v), d);
+    if (Number(s.replace(/,/g, '')) === 0) return s;
+    return (v > 0 ? '+' : MINUS) + s;
+  }
+  // money in display currency, USD input
+  function money(usd, o) {
+    o = o || {};
+    if (usd == null || !isFinite(usd)) return '—';
+    let v = usd * curF();
+    const a = Math.abs(v);
+    let body;
+    if (o.compact && a >= 1e6) body = (a / 1e6).toLocaleString('en-GB', { maximumFractionDigits: a >= 1e8 ? 0 : 2 }) + 'M';
+    else if (o.compact && a >= 1e4) body = (a / 1e3).toLocaleString('en-GB', { maximumFractionDigits: a >= 1e5 ? 0 : 1 }) + 'k';
+    else body = a.toLocaleString('en-GB', { minimumFractionDigits: o.dp || 0, maximumFractionDigits: o.dp || 0 });
+    const zero = Number(body.replace(/[^0-9.]/g, '')) === 0;
+    const sign = zero ? '' : (v < 0 ? MINUS : (o.signed ? '+' : ''));
+    return sign + sym() + body;
+  }
+  // fuel price: per-unit multiplier from USD per tonne
+  function unitFactor(unit, fuel) {
+    if (unit === 't') return 1;
+    if (unit === 'GJ') return 1 / fuel.lhv;
+    const kgPerL = fuel.iata ? 1000 / (M.BBL_PER_T * M.L_PER_BBL) : fuel.rho / 1000;
+    if (unit === 'L') return kgPerL / 1000;
+    if (unit === 'gal') return kgPerL / 1000 * M.L_PER_GAL;
+    return kgPerL / 1000 * M.L_PER_BBL; // bbl
+  }
+  const JET_FUEL = () => ({ iata: true, lhv: state.adv.jetLhv });
+  function priceIn(usdT, fuel, unit) { return usdT * unitFactor(unit || state.unit, fuel) * curF(); }
+  function fmtPrice(usdT, fuel, o) {
+    o = o || {};
+    const unit = o.unit || state.unit;
+    const v = priceIn(usdT, fuel, unit);
+    if (!isFinite(v)) return '—';
+    const dp = o.dp != null ? o.dp : UNIT_DP[unit];
+    const s = sym() + fmt(Math.abs(v), dp);
+    return (v < 0 ? MINUS : '') + s + (o.noUnit ? '' : '/' + UNIT_LABEL[unit]);
+  }
+  const unitText = () => sym() + '/' + UNIT_LABEL[state.unit];
+  function fmtDate(s, short) {
+    if (!isDate(s)) return s || '';
+    const p = s.split('-').map(Number);
+    const d = new Date(Date.UTC(p[0], p[1] - 1, p[2] || 1));
+    const o = p[2] ? { day: 'numeric', month: 'short' } : { month: 'short' };
+    if (!short) o.year = 'numeric';
+    return d.toLocaleDateString('en-GB', Object.assign(o, { timeZone: 'UTC' }));
+  }
+  function fmtStamp(iso) {
+    const t = Date.parse(iso); if (isNaN(t)) return '';
+    return new Date(t).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London' }) + ' UK';
+  }
+  function el(tag, attrs, kids) {
+    const e = document.createElement(tag);
+    if (attrs) for (const k in attrs) {
+      if (k === 'class') e.className = attrs[k];
+      else if (k === 'text') e.textContent = attrs[k];
+      else if (k === 'html') e.innerHTML = attrs[k];   // static icon markup only
+      else if (k === 'style') e.setAttribute('style', attrs[k]);
+      else e.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(c => { if (c != null) e.append(c); });
+    return e;
+  }
+  function rich(parts) { // [['text', bold?], ...]
+    const f = document.createDocumentFragment();
+    parts.forEach(p => f.append(p[1] ? el('strong', { text: p[0] }) : document.createTextNode(p[0])));
+    return f;
+  }
+  function pill(kind, icon, text) {
+    return el('span', { class: 'pill ' + kind }, [el('span', { html: ICON[icon], style: 'display:inline-flex' }), document.createTextNode(text)]);
+  }
+
+  // ---------------------------------------------------------------- state
+  const DEFAULTS = {
+    v: 3, acId: 'a20n', rangeKm: 2000, seats: 165, lf: 85, cargoKg: 0, flights: 1300, fleet: 1,
+    pathway: 'HEFA', feedstock: { HEFA: 'uco', FT: 'msw', ATJ: 'for-res-ib', PTL: 'ptl' },
+    blendPct: 10, gridG: 20,
+    jetBasis: 'iata', jetManualUsdT: 1500,
+    saf: { HEFA: { preset: 'feed', usd: null }, FT: { preset: 'easa25adv', usd: null },
+      ATJ: { preset: 'easa25adv', usd: null }, PTL: { preset: 'easa25syn', usd: null } },
+    carbonOn: true, carbonSrc: 'eua', carbonManualUsd: 100, carbonBasis: 'ets',
+    currency: 'USD', unit: 't',
+    showLH2: false, lh2Eta: 0.5, lh2Ld: 5,
+    adv: { jetLhv: 43.2, jetRho: 800, jetArom: 17.5, safLhv: null, safRho: null, cont: 5, rResKm: 600, rAllowKm: 200, paxMass: 100 }
+  };
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const STORE_KEY = 'saf-dashboard-state';
+  function loadState() {
+    try {
+      const s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      if (s && s.v === DEFAULTS.v) return Object.assign(clone(DEFAULTS), s, { adv: Object.assign(clone(DEFAULTS.adv), s.adv || {}) });
+    } catch (e) { /* storage unavailable */ }
+    return clone(DEFAULTS);
+  }
+  let saveTimer = 0;
+  function saveState() {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ } }, 400);
+  }
+  let state = loadState();
+  if (!M.AIRCRAFT.some(a => a.id === state.acId)) state = clone(DEFAULTS);
+  const acOf = () => M.AIRCRAFT.find(a => a.id === state.acId) || M.AIRCRAFT[0];
+
+  // ------------------------------------------------------- market values
+  function safPresetUsd(pid, presetId) {
+    const p = (M.PRICE_PRESETS[pid] || []).find(x => x.id === presetId);
+    if (!p) return null;
+    if (p.feedKey === 'hefa') return feed.saf.hefa_usd_t;
+    if (p.computedKey === 'ptl') return Math.round(M.ptlCostUsdT(M.ELECTRO));
+    return p.usd;
+  }
+  function safUsd(pid) {
+    const s = state.saf[pid] || {};
+    if (s.preset === 'custom' && isFinite(s.usd) && s.usd > 0) return s.usd;
+    const v = safPresetUsd(pid, s.preset);
+    return v != null ? v : safPresetUsd(pid, M.PRICE_PRESETS[pid][0].id);
+  }
+  function market() {
+    const iataUsdT = M.conv.bblToUsdT(feed.jet.iata.usd_bbl);
+    const usgcUsdT = M.conv.galToUsdT(feed.jet.usgc.usd_gal);
+    const jetUsdT = state.jetBasis === 'iata' ? iataUsdT : state.jetBasis === 'usgc' ? usgcUsdT : state.jetManualUsdT;
+    const euaUsd = feed.carbon.eua_eur_t * feed.fx.usd_per_eur;
+    const carbonUsd = state.carbonSrc === 'eua' ? euaUsd : state.carbonManualUsd;
+    return { iataUsdT, usgcUsdT, jetUsdT, euaUsd, carbonUsd };
+  }
+
+  function inputs(mk) {
+    const prices = {};
+    M.PATHWAY_ORDER.forEach(pid => { prices[pid] = safUsd(pid); });
+    const P = M.PATHWAYS[state.pathway];
+    return {
+      acId: state.acId, seats: state.seats, lf: state.lf / 100, cargoKg: state.cargoKg,
+      rangeKm: state.rangeKm, flightsPerYear: state.flights, fleet: state.fleet,
+      pathway: state.pathway, feedstockId: state.feedstock[state.pathway], blendPct: state.blendPct,
+      gridG: state.gridG, jetUsdT: mk.jetUsdT, safUsdT: prices[state.pathway], pathwayPrices: prices,
+      carbonOn: state.carbonOn, carbonUsdT: mk.carbonUsd, carbonBasis: state.carbonBasis,
+      showLH2: state.showLH2, lh2EtaGrav: state.lh2Eta, lh2LdPen: state.lh2Ld / 100,
+      adv: {
+        cont: state.adv.cont / 100, rResKm: state.adv.rResKm, rAllowKm: state.adv.rAllowKm, paxMass: state.adv.paxMass,
+        jet: { lhv: state.adv.jetLhv, rho: state.adv.jetRho, arom: state.adv.jetArom },
+        saf: { lhv: state.adv.safLhv || P.lhv, rho: state.adv.safRho || P.rho }
+      }
+    };
+  }
+
+  // ------------------------------------------------------------- controls
+  function buildSeg(container, name, options, current) {
+    container.textContent = '';
+    options.forEach(o => {
+      const id = name + '-' + o.v;
+      const input = el('input', { type: 'radio', name, value: o.v, id });
+      if (String(o.v) === String(current)) input.checked = true;
+      const lab = el('label', { for: id, title: o.title || '' }, [input, el('span', { text: o.l })]);
+      container.append(lab);
+    });
+  }
+  function setSeg(name, v) {
+    const r = document.querySelector('input[name="' + name + '"][value="' + v + '"]');
+    if (r) r.checked = true;
+  }
+
+  const BLEND_CHIPS = [
+    { v: 2, t: 'ReFuelEU Aviation and UK SAF Mandate, 2025' },
+    { v: 6, t: 'ReFuelEU Aviation, 2030' },
+    { v: 10, t: 'UK SAF Mandate, 2030' },
+    { v: 20, t: 'ReFuelEU Aviation, 2035' },
+    { v: 50, t: 'ASTM D7566 maximum for these annexes' }
+  ];
+
+  function initControls() {
+    buildSeg($('ctl-currency'), 'cur', [{ v: 'USD', l: 'USD' }, { v: 'GBP', l: 'GBP' }, { v: 'EUR', l: 'EUR' }], state.currency);
+    buildSeg($('ctl-unit'), 'unit', [{ v: 't', l: 'tonne' }, { v: 'bbl', l: 'bbl' }, { v: 'gal', l: 'gal' }, { v: 'L', l: 'litre' }, { v: 'GJ', l: 'GJ' }], state.unit);
+    const sel = $('in-ac');
+    M.AIRCRAFT.forEach(a => sel.append(el('option', { value: a.id, text: a.name + (a.cls === 'wide' ? ' (widebody)' : '') })));
+    buildSeg($('in-path'), 'path', M.PATHWAY_ORDER.map(p => ({ v: p, l: M.PATHWAYS[p].name.replace('-SPK', '').replace(' e-SPK', ''), title: M.PATHWAYS[p].long })), state.pathway);
+    buildSeg($('in-jetbasis'), 'jetbasis', [{ v: 'iata', l: 'IATA global' }, { v: 'usgc', l: 'US Gulf Coast' }, { v: 'manual', l: 'Manual' }], state.jetBasis);
+    buildSeg($('in-carbonsrc'), 'carbonsrc', [{ v: 'eua', l: 'EU ETS (live)' }, { v: 'manual', l: 'Manual' }], state.carbonSrc);
+    buildSeg($('in-basis'), 'basis', [{ v: 'ets', l: 'Fossil CO₂ (ETS rule)', title: 'EU ETS: pay for fossil CO₂ only; eligible SAF counts as zero' }, { v: 'wtw', l: 'Life-cycle CO₂e', title: 'Shadow price on well-to-wake emissions' }], state.carbonBasis);
+    const bc = $('blend-chips');
+    BLEND_CHIPS.forEach(c => bc.append(el('button', { type: 'button', class: 'chip', 'data-blend': c.v, title: c.t, 'aria-pressed': 'false', text: c.v + '%' })));
+    syncControls();
+  }
+
+  function fillFeedstocks() {
+    const sel = $('in-feed');
+    sel.textContent = '';
+    const P = M.PATHWAYS[state.pathway];
+    P.feedstocks.forEach(f => {
+      const ci = f.computed ? M.ptlCI(state.gridG, M.ELECTRO) : f.core + f.iluc;
+      sel.append(el('option', { value: f.id, text: f.name + ' · ' + fmt(ci, 1) + ' g/MJ' }));
+    });
+    sel.value = state.feedstock[state.pathway];
+  }
+
+  function fillSafChips() {
+    const box = $('saf-chips'); box.textContent = '';
+    const cur = state.saf[state.pathway].preset;
+    (M.PRICE_PRESETS[state.pathway] || []).forEach(p => {
+      const usd = safPresetUsd(state.pathway, p.id);
+      box.append(el('button', { type: 'button', class: 'chip', 'data-preset': p.id, 'aria-pressed': String(cur === p.id),
+        title: p.note, text: p.label + ' · ' + fmtPrice(usd, safFuel(), { noUnit: true }) }));
+    });
+  }
+  const safFuel = () => {
+    const P = M.PATHWAYS[state.pathway];
+    return { rho: state.adv.safRho || P.rho, lhv: state.adv.safLhv || P.lhv };
+  };
+
+  function setVal(id, v, dp) {
+    const e = $(id);
+    if (document.activeElement === e) return;      // don't fight the user's typing
+    e.value = (v == null || !isFinite(v)) ? '' : (dp != null ? Number(v).toFixed(dp) : String(v));
+  }
+
+  function syncControls() {
+    const ac = acOf();
+    $('in-ac').value = state.acId;
+    const adv = inputs(market()).adv;
+    const jet = { lhv: adv.jet.lhv, rho: adv.jet.rho };
+    const K = M.calibrateK(ac, jet, adv);
+    const ferry = M.rangeAt(ac, K, jet, 0, adv);
+    const pmr = M.rangeAt(ac, K, jet, ac.mzfw - ac.oew, adv);
+    const rmax = Math.max(500, Math.floor(ferry / 100) * 100);
+    $('in-range').max = rmax;
+    $('in-range').value = Math.min(state.rangeKm, rmax);
+    setVal('in-range-n', state.rangeKm);
+    $('range-hint').textContent = 'Jet A-1: about ' + fmt(pmr, 0) + ' km at maximum payload, ' + fmt(ferry, 0) + ' km ferry range.';
+    setVal('in-seats', state.seats); setVal('in-lf', state.lf); setVal('in-cargo', state.cargoKg);
+    setVal('in-flights', state.flights); setVal('in-fleet', state.fleet);
+    setSeg('path', state.pathway);
+    fillFeedstocks();
+    $('grid-field').hidden = state.pathway !== 'PTL';
+    $('in-grid').value = state.gridG; $('out-grid').textContent = String(state.gridG);
+    $('in-blend').value = state.blendPct; setVal('in-blend-n', state.blendPct);
+    document.querySelectorAll('#blend-chips .chip').forEach(c => c.setAttribute('aria-pressed', String(Number(c.dataset.blend) === state.blendPct)));
+    setSeg('jetbasis', state.jetBasis); setSeg('carbonsrc', state.carbonSrc); setSeg('basis', state.carbonBasis);
+    setSeg('cur', state.currency); setSeg('unit', state.unit);
+    $('in-carbon-on').checked = state.carbonOn;
+    setVal('in-jlhv', state.adv.jetLhv); setVal('in-jrho', state.adv.jetRho); setVal('in-jarom', state.adv.jetArom);
+    const P = M.PATHWAYS[state.pathway];
+    $('adv-saf-h').textContent = 'Neat ' + P.name;
+    setVal('in-slhv', state.adv.safLhv || P.lhv); setVal('in-srho', state.adv.safRho || P.rho);
+    setVal('in-cont', state.adv.cont); setVal('in-pax', state.adv.paxMass); setVal('in-res', state.adv.rResKm); setVal('in-allow', state.adv.rAllowKm);
+    $('in-lh2').checked = state.showLH2; setVal('in-lh2-eta', state.lh2Eta); setVal('in-lh2-ld', state.lh2Ld);
+    fillSafChips();
+  }
+
+  function numIn(id, lo, hi) {
+    const v = parseFloat($(id).value);
+    return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : null;
+  }
+
+  function onInput(ev) {
+    const t = ev.target; const id = t.id; const name = t.name;
+    let structural = false;
+    if (name === 'cur') state.currency = t.value;
+    else if (name === 'unit') state.unit = t.value;
+    else if (name === 'path') { state.pathway = t.value; state.adv.safLhv = null; state.adv.safRho = null; structural = true; }
+    else if (name === 'jetbasis') {
+      if (t.value === 'manual' && state.jetBasis !== 'manual') state.jetManualUsdT = Math.round(market().jetUsdT);
+      state.jetBasis = t.value;
+    }
+    else if (name === 'carbonsrc') {
+      if (t.value === 'manual' && state.carbonSrc !== 'manual') state.carbonManualUsd = Math.round(market().carbonUsd);
+      state.carbonSrc = t.value;
+    }
+    else if (name === 'basis') state.carbonBasis = t.value;
+    else if (id === 'in-ac') {
+      state.acId = t.value; const ac = acOf();
+      state.seats = ac.seats; state.rangeKm = ac.mission; state.flights = ac.flights; structural = true;
+    }
+    else if (id === 'in-range') state.rangeKm = Number(t.value);
+    else if (id === 'in-range-n') { const v = numIn(id, 100, 25000); if (v != null) state.rangeKm = Math.round(v); }
+    else if (id === 'in-seats') { const v = numIn(id, 1, 600); if (v != null) state.seats = Math.round(v); }
+    else if (id === 'in-lf') { const v = numIn(id, 1, 100); if (v != null) state.lf = v; }
+    else if (id === 'in-cargo') { const v = numIn(id, 0, 100000); if (v != null) state.cargoKg = v; }
+    else if (id === 'in-flights') { const v = numIn(id, 1, 5000); if (v != null) state.flights = Math.round(v); }
+    else if (id === 'in-fleet') { const v = numIn(id, 1, 5000); if (v != null) state.fleet = Math.round(v); }
+    else if (id === 'in-feed') state.feedstock[state.pathway] = t.value;
+    else if (id === 'in-grid') { state.gridG = Number(t.value); $('out-grid').textContent = t.value; fillFeedstocks(); }
+    else if (id === 'in-blend') state.blendPct = Number(t.value);
+    else if (id === 'in-blend-n') { const v = numIn(id, 0, 100); if (v != null) state.blendPct = Math.round(v); }
+    else if (id === 'in-jet') {
+      const v = parseFloat(t.value);
+      if (isFinite(v) && v > 0) state.jetManualUsdT = v / (unitFactor(state.unit, JET_FUEL()) * curF());
+    }
+    else if (id === 'in-saf') {
+      const v = parseFloat(t.value);
+      if (isFinite(v) && v > 0) state.saf[state.pathway] = { preset: 'custom', usd: v / (unitFactor(state.unit, safFuel()) * curF()) };
+    }
+    else if (id === 'in-carbon-on') state.carbonOn = t.checked;
+    else if (id === 'in-carbon') { const v = parseFloat(t.value); if (isFinite(v) && v >= 0) state.carbonManualUsd = v / curF(); }
+    else if (id === 'in-jlhv') { const v = numIn(id, 42, 45); if (v != null) state.adv.jetLhv = v; structural = true; }
+    else if (id === 'in-jrho') { const v = numIn(id, 740, 860); if (v != null) state.adv.jetRho = v; structural = true; }
+    else if (id === 'in-jarom') { const v = numIn(id, 0, 30); if (v != null) state.adv.jetArom = v; }
+    else if (id === 'in-slhv') { const v = numIn(id, 40, 47); if (v != null) state.adv.safLhv = v; }
+    else if (id === 'in-srho') { const v = numIn(id, 700, 820); if (v != null) state.adv.safRho = v; }
+    else if (id === 'in-cont') { const v = numIn(id, 0, 15); if (v != null) state.adv.cont = v; structural = true; }
+    else if (id === 'in-pax') { const v = numIn(id, 60, 140); if (v != null) state.adv.paxMass = v; structural = true; }
+    else if (id === 'in-res') { const v = numIn(id, 0, 2000); if (v != null) state.adv.rResKm = v; structural = true; }
+    else if (id === 'in-allow') { const v = numIn(id, 0, 1000); if (v != null) state.adv.rAllowKm = v; structural = true; }
+    else if (id === 'in-lh2') state.showLH2 = t.checked;
+    else if (id === 'in-lh2-eta') { const v = numIn(id, 0.15, 0.95); if (v != null) state.lh2Eta = v; }
+    else if (id === 'in-lh2-ld') { const v = numIn(id, 0, 30); if (v != null) state.lh2Ld = v; }
+    else return;
+    if (structural || ['cur', 'unit', 'path'].includes(name) || id === 'in-ac') syncControls();
+    else if (id === 'in-range' || id === 'in-range-n') { setVal('in-range-n', state.rangeKm); $('in-range').value = state.rangeKm; }
+    else if (id === 'in-blend' || id === 'in-blend-n') {
+      $('in-blend').value = state.blendPct; setVal('in-blend-n', state.blendPct);
+      document.querySelectorAll('#blend-chips .chip').forEach(c => c.setAttribute('aria-pressed', String(Number(c.dataset.blend) === state.blendPct)));
+    }
+    else if (id === 'in-saf') fillSafChips();
+    schedule();
+  }
+
+  function onClick(ev) {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    if (b.dataset.blend) { state.blendPct = Number(b.dataset.blend); syncControls(); schedule(); }
+    else if (b.dataset.preset) { state.saf[state.pathway] = { preset: b.dataset.preset, usd: null }; fillSafChips(); schedule(); }
+  }
+
+  // --------------------------------------------------------------- theme
+  function theme() {
+    const cs = getComputedStyle(document.documentElement);
+    const v = n => cs.getPropertyValue(n).trim();
+    return { ink: v('--ink'), ink2: v('--ink-2'), muted: v('--muted'), line: v('--line'), lineStrong: v('--line-strong'),
+      surface: v('--surface'), raised: v('--raised'), accent: v('--accent'), blend: v('--s-blend'), jet: v('--s-jet'),
+      neat: v('--s-neat'), neutral: v('--s-neutral'), bad: v('--bad'), warn: v('--warn'), good: v('--good'), badWash: v('--bad-wash') };
+  }
+  function alpha(hex, a) {
+    const h = hex.replace('#', '');
+    if (h.length !== 6) return hex;
+    const n = parseInt(h, 16);
+    return 'rgba(' + ((n >> 16) & 255) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+  }
+
+  // -------------------------------------------------------- chart plugins
+  function labelBox(ctx, text, x, y, align, color, bg, font) {
+    ctx.font = font || '500 11.5px ' + FONT;
+    const w = ctx.measureText(text).width;
+    let x0 = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
+    ctx.fillStyle = bg;
+    ctx.fillRect(x0 - 3, y - 8, w + 6, 16);
+    ctx.fillStyle = color;
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'left';
+    ctx.fillText(text, x0, y);
+  }
+  const refLinesPlugin = {
+    id: 'refLines',
+    beforeDatasetsDraw(chart, args, opts) {
+      const bands = (opts && opts.bands) || [];
+      if (!bands.length) return;
+      const { ctx, chartArea: a } = chart;
+      ctx.save();
+      bands.forEach(b => {
+        const sc = chart.scales[b.axis];
+        if (!sc) return;
+        let p1 = sc.getPixelForValue(b.from), p2 = sc.getPixelForValue(b.to);
+        ctx.fillStyle = b.color;
+        if (b.axis === 'x') { const x1 = Math.max(a.left, Math.min(p1, p2)), x2 = Math.min(a.right, Math.max(p1, p2)); if (x2 > x1) ctx.fillRect(x1, a.top, x2 - x1, a.bottom - a.top); }
+        else { const y1 = Math.max(a.top, Math.min(p1, p2)), y2 = Math.min(a.bottom, Math.max(p1, p2)); if (y2 > y1) ctx.fillRect(a.left, y1, a.right - a.left, y2 - y1); }
+        if (b.label) { const t = theme(); const xx = b.axis === 'x' ? Math.max(a.left, Math.min(p1, p2)) + 6 : a.left + 6; const yy = b.axis === 'x' ? a.bottom - 10 : Math.max(a.top, Math.min(p1, p2)) + 10; labelBox(ctx, b.label, xx, yy, 'left', b.textColor || t.ink2, 'rgba(0,0,0,0)'); }
+      });
+      ctx.restore();
+    },
+    afterDatasetsDraw(chart, args, opts) {
+      const lines = (opts && opts.lines) || [];
+      if (!lines.length) return;
+      const { ctx, chartArea: a } = chart;
+      const t = theme();
+      ctx.save();
+      lines.forEach(l => {
+        const sc = chart.scales[l.axis];
+        if (!sc || l.value == null || !isFinite(l.value)) return;
+        const p = sc.getPixelForValue(l.value);
+        ctx.strokeStyle = l.color; ctx.lineWidth = l.width || 1.25;
+        ctx.setLineDash(l.dash || []);
+        ctx.beginPath();
+        if (l.axis === 'x') { if (p < a.left - 1 || p > a.right + 1) return; ctx.moveTo(p, a.top); ctx.lineTo(p, a.bottom); }
+        else { if (p < a.top - 1 || p > a.bottom + 1) return; ctx.moveTo(a.left, p); ctx.lineTo(a.right, p); }
+        ctx.stroke(); ctx.setLineDash([]);
+        if (l.label) {
+          if (l.axis === 'x') {
+            const right = p > a.left + (a.right - a.left) * 0.62;
+            const y = l.labelPos === 'bottom' ? a.bottom - 10 : a.top + 10 + (l.offset || 0);
+            labelBox(ctx, l.label, right ? p - 5 : p + 5, y, right ? 'right' : 'left', l.textColor || t.ink2, t.surface);
+          } else {
+            const left = l.labelPos === 'left';
+            labelBox(ctx, l.label, left ? a.left + 6 : a.right - 4, p - 10 + (l.offset || 0), left ? 'left' : 'right', l.textColor || t.ink2, t.surface);
+          }
+        }
+      });
+      ctx.restore();
+    }
+  };
+  const crosshairPlugin = {
+    id: 'crosshair',
+    afterDatasetsDraw(chart, args, opts) {
+      if (!opts || !opts.enabled) return;
+      const act = chart.tooltip && chart.tooltip.getActiveElements ? chart.tooltip.getActiveElements() : [];
+      if (!act || !act.length) return;
+      const x = act[0].element.x, a = chart.chartArea, ctx = chart.ctx;
+      ctx.save(); ctx.strokeStyle = theme().lineStrong; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, a.top); ctx.lineTo(x, a.bottom); ctx.stroke(); ctx.restore();
+    }
+  };
+  const barValuesPlugin = {
+    id: 'barValues',
+    afterDatasetsDraw(chart, args, opts) {
+      if (!opts || !opts.enabled) return;
+      const ctx = chart.ctx; const t = theme();
+      ctx.save();
+      ctx.font = '500 12px ' + FONT; ctx.fillStyle = opts.color || t.ink2; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+      const n = (chart.data.labels || []).length;
+      for (let i = 0; i < n; i++) {
+        let endX = null, y = null, total = 0;
+        chart.data.datasets.forEach((ds, di) => {
+          const meta = chart.getDatasetMeta(di);
+          if (meta.hidden || ds.type === 'scatter' || ds.skipValue) return;
+          const v = ds.data[i];
+          if (typeof v !== 'number' || !isFinite(v)) return;
+          total += v;
+          const e = meta.data[i]; if (!e) return;
+          const xe = Math.max(e.x, e.base);
+          if (endX === null || xe > endX) { endX = xe; y = e.y; }
+        });
+        if (endX === null) continue;
+        const text = opts.format(opts.stacked ? total : chart.data.datasets[0].data[i], i);
+        if (text) ctx.fillText(text, endX + 6, y);
+      }
+      ctx.restore();
+    }
+  };
+  const pointLabelsPlugin = {
+    id: 'pointLabels',
+    afterDatasetsDraw(chart, args, opts) {
+      const labels = (opts && opts.labels) || [];
+      if (!labels.length) return;
+      const ctx = chart.ctx, t = theme(), a = chart.chartArea;
+      ctx.save();
+      labels.forEach(l => {
+        const meta = chart.getDatasetMeta(l.ds); const e = meta && meta.data[l.i];
+        if (!e || meta.hidden) return;
+        const dx = Math.abs(l.dx != null ? l.dx : 9), dy = l.dy || 0;
+        ctx.font = l.font || '500 11.5px ' + FONT;
+        const w = ctx.measureText(l.text).width;
+        let align = l.align || 'left';
+        if (align === 'left' && e.x + dx + w > a.right + 4) align = 'right';
+        else if (align === 'right' && e.x - dx - w < a.left - 4) align = 'left';
+        const x = align === 'left' ? e.x + dx : e.x - dx;
+        const y = Math.min(a.bottom - 8, Math.max(a.top + 8, e.y + dy));
+        labelBox(ctx, l.text, x, y, align, l.color || t.ink, t.surface, l.font);
+      });
+      ctx.restore();
+    }
+  };
+  function niceBounds(lo, hi, target) {
+    const raw = (hi - lo) / (target || 6);
+    const p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const m = raw / p;
+    const step = (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+    return { min: Math.floor(lo / step) * step, max: Math.ceil(hi / step) * step, step };
+  }
+
+  let chartsReady = false;
+  function setupChartJs() {
+    if (!window.Chart) return false;
+    if (chartsReady) return true;
+    Chart.register(refLinesPlugin, crosshairPlugin, barValuesPlugin, pointLabelsPlugin);
+    Chart.defaults.font.family = FONT;
+    Chart.defaults.font.size = 12;
+    Chart.defaults.animation = reduceMotion ? false : { duration: 220 };
+    Chart.defaults.plugins.legend.display = false;
+    chartsReady = true;
+    return true;
+  }
+  const charts = {};
+  function upsert(id, cfg) {
+    const canvas = $(id);
+    if (!canvas) return;
+    if (!setupChartJs()) {
+      const box = canvas.parentElement;
+      if (!box.querySelector('.chart-fallback')) box.append(el('div', { class: 'chart-fallback', text: 'The chart library did not load in this view. The data table below has every value.' }));
+      return;
+    }
+    if (charts[id]) { charts[id].data = cfg.data; charts[id].options = cfg.options; charts[id].update(reduceMotion ? 'none' : undefined); }
+    else charts[id] = new Chart(canvas.getContext('2d'), cfg);
+  }
+  function tooltipBase(t) {
+    return { backgroundColor: t.raised, borderColor: t.lineStrong, borderWidth: 1, titleColor: t.ink2, bodyColor: t.ink,
+      footerColor: t.ink2, padding: 10, cornerRadius: 8, titleFont: { weight: '500', size: 12 }, bodyFont: { weight: '600', size: 12.5 },
+      footerFont: { weight: '400', size: 12 }, boxWidth: 12, boxHeight: 2, boxPadding: 6, caretSize: 5 };
+  }
+  function axis(t, o) {
+    o = o || {};
+    return Object.assign({
+      grid: { color: t.line, drawTicks: false, display: o.grid !== false },
+      border: { color: t.lineStrong, display: true },
+      ticks: { color: t.muted, padding: 6, font: { size: 11.5 }, callback: o.tick },
+      title: o.title ? { display: true, text: o.title, color: t.ink2, font: { size: 12, weight: '500' }, padding: { top: 6, bottom: 2 } } : { display: false }
+    }, o.extra || {});
+  }
+
+  // -------------------------------------------------------------- legends
+  function legend(boxId, items) {
+    const box = $(boxId); if (!box) return;
+    box.textContent = '';
+    items.forEach(it => {
+      const i = el('i', { class: it.kind || '', style: it.kind === 'ref' ? 'border-top-color:' + it.color : 'background:' + it.color });
+      box.append(el('span', {}, [i, document.createTextNode(it.label)]));
+    });
+  }
+  function dataTable(boxId, head, rows, o) {
+    const box = typeof boxId === 'string' ? $(boxId) : boxId; if (!box) return;
+    o = o || {};
+    const tb = el('table', { class: 'data' + (o.nowrap ? ' nowrap-first' : '') });
+    const thead = el('thead'); const trh = el('tr');
+    head.forEach((h, i) => trh.append(el('th', { text: h, class: (o.leftCols || []).includes(i) ? 'l' : '' })));
+    thead.append(trh); tb.append(thead);
+    const tbody = el('tbody');
+    rows.forEach(r => {
+      const tr = el('tr', r.attrs || {});
+      (r.cells || r).forEach((c, i) => {
+        const td = el('td', { class: (o.leftCols || []).includes(i) ? 'l' : '' });
+        if (c instanceof Node) td.append(c); else td.textContent = c;
+        tr.append(td);
+      });
+      tbody.append(tr);
+    });
+    tb.append(tbody);
+    box.textContent = ''; box.append(tb);
+    return tb;
+  }
+  const okMark = ok => el('span', { class: ok ? 'ok-mark' : 'bad-mark' }, [el('span', { html: ok ? ICON.check : ICON.cross, style: 'display:inline-flex' }), document.createTextNode(ok ? 'Within limit' : 'Outside limit')]);
+
+  // ------------------------------------------------------------- render
+  let raf = 0, last = null, lastMk = null;
+  function schedule() { if (!raf) raf = requestAnimationFrame(() => { raf = 0; render(); }); }
+  let activeView = 'savings';
+
+  function render() {
+    const mk = market();
+    const r = M.compute(inputs(mk), mk);
+    last = r; lastMk = mk;
+    renderTicker(mk);
+    renderRail(r, mk);
+    renderSavingsText(r, mk);
+    renderPerformanceText(r);
+    renderFuelText(r);
+    renderPathwaysText(r, mk);
+    renderMarketText(mk);
+    renderCharts(activeView);
+    saveState();
+  }
+  function renderCharts(view) {
+    if (!last) return;
+    const r = last, mk = lastMk, t = theme();
+    try {
+      if (view === 'savings') { chartCost(r, t); chartGhg(r, t); chartBreakEven(r, mk, t); }
+      else if (view === 'performance') chartPayloadRange(r, t);
+      else if (view === 'fuel') { chartWall(r, t); chartEnergy(r, t); }
+      else if (view === 'pathways') { chartCI(r, t); chartAbate(r, mk, t); }
+      else if (view === 'market') chartHistory(t);
+    } catch (e) { if (window.console) console.error(e); }
+  }
+
+  // ------------------------------------------------------------- ticker
+  function renderTicker(mk) {
+    const jf = JET_FUEL();
+    const iata = feed.jet.iata, usgc = feed.jet.usgc;
+    const tk = (id, main, small) => { const e = $(id); e.textContent = main; if (small) e.append(el('small', { text: small })); };
+    tk('tk-iata', fmtPrice(mk.iataUsdT, jf, { noUnit: true }), '/' + UNIT_LABEL[state.unit]);
+    const sub = $('tk-iata-sub'); sub.textContent = '';
+    if (iata.wow_pct != null) sub.append(el('span', { class: iata.wow_pct > 0 ? 'delta-up' : 'delta-down', text: fmtSigned(iata.wow_pct, 1) + '% w/w' }));
+    sub.append(el('span', { text: '$' + fmt(iata.usd_bbl, 2) + '/bbl · ' + (iata.period || '') }));
+    tk('tk-usgc', fmtPrice(mk.usgcUsdT, jf, { noUnit: true }), '/' + UNIT_LABEL[state.unit]);
+    $('tk-usgc-sub').textContent = '$' + fmt(usgc.usd_gal, 3) + '/gal · ' + fmtDate(usgc.date);
+    tk('tk-eua', money(mk.euaUsd, { dp: state.currency === 'EUR' ? 2 : 1 }), '/tCO₂');
+    $('tk-eua-sub').textContent = '€' + fmt(feed.carbon.eua_eur_t, 2) + ' · ' + fmtDate(feed.carbon.date);
+    tk('tk-saf', fmtPrice(feed.saf.hefa_usd_t, { rho: 760, lhv: 44.1 }, { noUnit: true }), '/' + UNIT_LABEL[state.unit]);
+    $('tk-saf-sub').textContent = (feed.saf.period || '') + ' · ' + fmt(feed.saf.hefa_usd_t / mk.iataUsdT, 2) + '× jet';
+  }
+  function renderFeedStatus() {
+    const box = $('tk-feed'); if (!box) return;
+    box.textContent = '';
+    let p;
+    if (feedMode === 'live') p = el('span', { class: 'pill good' }, [el('span', { class: 'live-dot' }), document.createTextNode('Live feed')]);
+    else if (feedMode === 'stale') p = pill('warn', 'clock', 'Feed not refreshed recently');
+    else if (feedMode === 'connecting') p = pill('neutral', 'clock', 'Connecting to feed…');
+    else if (feedMode === 'error') p = pill('warn', 'alert', 'Feed unavailable');
+    else p = pill('neutral', 'plug', 'Published snapshot');
+    box.append(p);
+    const s = $('tk-feed-sub');
+    s.textContent = 'Updated ' + fmtStamp(feed.updated_at);
+    $('foot-feed').textContent = 'Prices updated ' + fmtStamp(feed.updated_at) + (feedMode === 'live' ? ' (live feed)' : feedMode === 'stale' ? ' (feed stale)' : ' (snapshot)');
+    if (feedNote) s.textContent += ' · ' + feedNote;
+  }
+
+  // --------------------------------------------------------------- rail
+  function renderRail(r, mk) {
+    const ac = r.ac;
+    $('rail-summary').textContent = ac.short + ' · ' + fmt(state.rangeKm, 0) + ' km · ' + fmt(r.pax, 0) + ' passengers · ' + blendName(r) + ' (' + r.fci.f.name + ') · jet ' + fmtPrice(mk.jetUsdT, JET_FUEL()) + (state.carbonOn ? ' · carbon ' + money(mk.carbonUsd) + '/t' : '');
+    const pmax = ac.mzfw - ac.oew;
+    const pr = $('payload-readout');
+    pr.textContent = fmt(r.pax, 0) + ' passengers · ' + fmt(r.payload / 1000, 1) + ' t payload (max ' + fmt(pmax / 1000, 1) + ' t)';
+    pr.style.color = r.payload > pmax ? 'var(--bad-ink)' : '';
+    const P = r.P;
+    $('path-hint').textContent = P.long + '. ' + P.annex + ', up to ' + P.maxBlend + '% in a blend. ' + P.status + '.';
+    const f = r.fci;
+    const feedHint = $('feed-hint');
+    if (f.f.computed) feedHint.textContent = 'Built up from electricity: ' + fmt(r.saf.ci, 1) + ' gCO₂e/MJ at ' + state.gridG + ' g/kWh (' + fmtSigned(-(1 - r.saf.ci / M.CI_JET) * 100, 0) + '% vs fossil).';
+    else feedHint.textContent = 'Core LCA ' + fmt(f.core, 1) + (f.iluc ? ' + land-use change ' + fmtSigned(f.iluc, 1) : '') + ' = ' + fmt(f.total, 1) + ' gCO₂e/MJ, ' + (f.total < M.CI_JET ? fmt((1 - f.total / M.CI_JET) * 100, 0) + '% below' : fmt((f.total / M.CI_JET - 1) * 100, 0) + '% above') + ' fossil jet (89).';
+    if (!r.saf.etsEligible && !(f.total >= M.CI_JET)) feedHint.textContent += ' Below the ' + (r.P.id === 'PTL' ? '70' : '65') + '% saving needed for EU ETS zero-rating, so it is charged like fossil fuel there.';
+    feedHint.className = 'hint' + (f.total >= M.CI_JET ? ' bad' : !r.saf.etsEligible ? ' warn' : '');
+    const bw = $('blend-warn');
+    const wall = r.wall;
+    if (state.blendPct > P.maxBlend) { bw.hidden = false; bw.className = 'hint bad'; bw.textContent = 'Above the ' + P.maxBlend + '% limit in ' + P.annex + '. Neat use is not yet certified; results are hypothetical.'; }
+    else if (r.phi > wall.max + 1e-9) { bw.hidden = false; bw.className = 'hint warn'; bw.textContent = 'This blend fails the ' + wall.binding + ' limit of the fuel specification (see Fuel properties).'; }
+    else bw.hidden = true;
+    // jet price
+    const jf = JET_FUEL();
+    $('jet-unit').textContent = unitText();
+    const jin = $('in-jet');
+    jin.disabled = state.jetBasis !== 'manual';
+    if (document.activeElement !== jin) jin.value = (priceIn(mk.jetUsdT, jf)).toFixed(UNIT_DP[state.unit]);
+    $('jet-hint').textContent = state.jetBasis === 'iata' ? 'IATA global average, ' + (feed.jet.iata.period || 'latest week') + '. Refinery-gate price before into-plane fees.'
+      : state.jetBasis === 'usgc' ? 'EIA US Gulf Coast spot (FOB), ' + fmtDate(feed.jet.usgc.date) + '.' : 'Your own value. Switch back to use the live feed.';
+    // saf price
+    const sf = safFuel();
+    $('saf-unit').textContent = unitText();
+    const sin = $('in-saf');
+    if (document.activeElement !== sin) sin.value = priceIn(safUsd(state.pathway), sf).toFixed(UNIT_DP[state.unit]);
+    const s = state.saf[state.pathway];
+    const preset = (M.PRICE_PRESETS[state.pathway] || []).find(p => p.id === s.preset);
+    $('saf-hint').textContent = (s.preset === 'custom' ? 'Your own value.' : preset ? preset.note + (preset.feedKey ? ', ' + feed.saf.period : '') + '.' : '')
+      + ' ' + fmt(safUsd(state.pathway) / mk.jetUsdT, 2) + '× today\'s jet price per tonne.';
+    // carbon
+    const cin = $('in-carbon');
+    $('carbon-unit').textContent = sym() + '/tCO₂';
+    cin.disabled = state.carbonSrc !== 'manual' || !state.carbonOn;
+    if (document.activeElement !== cin) cin.value = (mk.carbonUsd * curF()).toFixed(2);
+    document.querySelectorAll('input[name="carbonsrc"], input[name="basis"]').forEach(i => { i.disabled = !state.carbonOn; });
+    $('carbon-hint').textContent = !state.carbonOn ? 'Off: costs exclude any carbon price.'
+      : (state.carbonSrc === 'eua' ? 'EU ETS, ' + (feed.carbon.label || 'EUA') + ' €' + fmt(feed.carbon.eua_eur_t, 2) + ' on ' + fmtDate(feed.carbon.date) + '. ' : '')
+        + (state.carbonBasis === 'ets' ? 'Charged on fossil CO₂ at 3.16 kg per kg of fossil jet; eligible SAF counts as zero.' : 'Charged on life-cycle CO₂e (a shadow price, not an ETS rule).');
+  }
+
+  // ------------------------------------------------------------ savings
+  function blendName(r) {
+    if (r.phi <= 0) return 'Jet A-1 only';
+    return fmt(r.phi * 100, 0) + '% ' + r.P.name;
+  }
+  function tile(lbl, val, small, sub) {
+    const v = el('div', { class: 'k-val' }, [document.createTextNode(val)]);
+    if (small) v.append(el('small', { text: small }));
+    return el('div', { class: 'tile' }, [el('div', { class: 'k-lbl', text: lbl }), v, el('div', { class: 'k-sub', text: sub || '' })]);
+  }
+  function banner(kind, text) {
+    return el('div', { class: 'banner ' + kind }, [el('span', { html: ICON.alert, style: 'display:inline-flex' }), el('div', { text })]);
+  }
+  function missionBanners(r) {
+    const out = [];
+    const ac = r.ac, mj = r.m.jet, mb = r.m.blend;
+    if (!mj.okPayload) out.push(banner('bad', 'Payload of ' + fmt(r.payload / 1000, 1) + ' t is above the ' + ac.short + ' maximum of ' + fmt((ac.mzfw - ac.oew) / 1000, 1) + ' t. Reduce seats, load factor or cargo.'));
+    if (!mj.okMTOW) out.push(banner('bad', 'With Jet A-1 this mission needs a take-off mass of ' + fmt(mj.tow / 1000, 1) + ' t, above the ' + fmt(ac.mtow / 1000, 1) + ' t MTOW. Shorten the stage or cut payload; figures below are hypothetical.'));
+    else if (!mj.okVol) out.push(banner('bad', 'With Jet A-1 this mission needs ' + fmt(mj.blockL, 0) + ' L of fuel, more than the ' + fmt(ac.fuelL, 0) + ' L tank capacity.'));
+    if (r.phi > 0 && mj.okMTOW && mj.okVol && (!mb.okVol || !mb.okMTOW)) out.push(banner('warn', 'Feasible on Jet A-1 but not with this blend: it needs ' + fmt(mb.blockL, 0) + ' L, ' + (mb.okVol ? 'and a take-off mass above MTOW.' : 'more than the ' + fmt(ac.fuelL, 0) + ' L tanks hold, because SAF is less dense.')));
+    if (r.saf.ci >= M.CI_JET && r.phi > 0) out.push(banner('bad', 'This feedstock has a higher life-cycle value (' + fmt(r.saf.ci, 1) + ' gCO₂e/MJ) than fossil jet (89), so blending it increases emissions.'));
+    return out;
+  }
+
+  function renderSavingsText(r, mk) {
+    const ec = r.ec, an = r.annual;
+    const sb = $('sav-banners'); sb.textContent = ''; missionBanners(r).forEach(b => sb.append(b));
+    // summary
+    const sm = $('summary'); sm.textContent = '';
+    const feedName = r.fci.f.name.charAt(0).toLowerCase() + r.fci.f.name.slice(1);
+    if (r.phi <= 0) {
+      sm.append(rich([['With no SAF in the tank there is nothing to compare. Move the '], ['SAF share', true], [' slider or pick a mandate share to see the savings.']]));
+    } else {
+      const parts = [
+        ['A '], [blendName(r) + ' (' + feedName + ')', true], [' blend on a '], [fmt(state.rangeKm, 0) + ' km ' + r.ac.short, true], [' sector '],
+        ec.dGhg > 0 ? ['cuts life-cycle emissions by '] : ['raises life-cycle emissions by '],
+        [fmt(Math.abs(ec.redPct), 1) + '%', true], [' (' + fmt(Math.abs(ec.dGhg), 2) + ' t CO₂e per flight). '],
+        ['At today\'s jet price (' + (state.jetBasis === 'iata' ? 'IATA global ' : state.jetBasis === 'usgc' ? 'US Gulf Coast ' : 'your value ') + fmtPrice(mk.jetUsdT, JET_FUEL()) + ') it '],
+        ec.dCost >= 0 ? ['adds '] : ['saves '], [money(Math.abs(ec.dCost)), true], [' of fuel per flight'],
+      ];
+      if (state.carbonOn) {
+        parts.push([', or ']);
+        parts.push([ec.net >= 0 ? money(ec.net) + ' more' : money(-ec.net) + ' less', true]);
+        parts.push([' after ' + (state.carbonBasis === 'ets' ? 'EU ETS savings' : 'the carbon price')]);
+      }
+      parts.push([': ']); parts.push([money(Math.abs(r.perPax.net), { dp: 2 }) + (r.perPax.net >= 0 ? ' per passenger.' : ' saved per passenger.'), true]);
+      if (isFinite(ec.beJet) && ec.net > 0) parts.push([' It pays for itself if jet fuel reaches ' + fmtPrice(ec.beJet, JET_FUEL()) + ' or SAF falls to ' + fmtPrice(ec.beSaf, safFuel()) + '.']);
+      sm.append(rich(parts));
+    }
+    // hero
+    const hv = $('hero-val'); hv.textContent = fmt(an.dGhg, an.dGhg < 100 ? 1 : 0); hv.append(el('small', { text: 't CO₂e' }));
+    $('hero-sub').textContent = r.phi > 0
+      ? fmt(ec.redPct, 1) + '% below Jet A-1 · ' + fmt(ec.dGhg, 2) + ' t per flight · ' + fmt(r.nFlights, 0) + ' flights a year'
+      : 'Set a SAF share above 0% to see savings';
+    const hk = $('hero-kv'); hk.textContent = '';
+    const hadd = (k, v) => { hk.append(el('dt', { text: k })); hk.append(el('dd', { text: v })); };
+    hadd('Jet A-1, per year', fmt(an.ghgJ, 0) + ' t CO₂e');
+    hadd('With the blend, per year', fmt(an.ghgJ - an.dGhg, 0) + ' t CO₂e');
+    hadd('Saved per passenger per flight', fmt(r.perPax.ghgAvoidedKg, 1) + ' kg CO₂e');
+    hadd('Fossil jet displaced per year', fmt((r.m.jet.trip - r.m.blend.trip * (1 - r.b.w)) * r.nFlights / 1000, 0) + ' t');
+    const vd = $('verdict'); vd.textContent = '';
+    if (r.phi > 0) {
+      if (ec.dGhg <= 0) vd.append(pill('bad', 'cross', 'No emissions saving'));
+      else if (ec.net > 0) vd.append(pill('warn', 'alert', 'Costs more than Jet A-1 today'));
+      else vd.append(pill('good', 'check', 'Cheaper than Jet A-1 today'));
+    }
+    // tiles
+    const tl = $('tiles'); tl.textContent = '';
+    const jf = JET_FUEL(), sf = safFuel();
+    tl.append(tile('Extra fuel cost per year', money(an.dCost, { compact: true, signed: true }), '',
+      money(ec.dCost, { signed: true }) + ' per flight (' + fmtSigned(ec.costJ ? ec.dCost / ec.costJ * 100 : 0, 1) + '%)'));
+    tl.append(tile('Carbon cost avoided per year', state.carbonOn ? money(an.carbonSaving, { compact: true }) : 'Off', '',
+      state.carbonOn ? (state.carbonBasis === 'ets' ? fmt(an.dEts, 0) + ' t fossil CO₂ at ' : fmt(an.dGhg, 0) + ' t CO₂e at ') + money(mk.carbonUsd, { dp: 0 }) + '/t' : 'Switch on a carbon price under Prices'));
+    tl.append(tile('Net cost per year', money(an.net, { compact: true, signed: true }), '',
+      money(ec.net, { signed: true }) + ' per flight · ' + money(r.perPax.net, { signed: true, dp: 2 }) + ' per passenger'));
+    tl.append(tile('Abatement cost', isFinite(ec.abate) ? money(ec.abate) : '—', isFinite(ec.abate) ? '/tCO₂e' : '',
+      'Extra fuel cost per tonne of life-cycle CO₂e avoided; the carbon price that would cover it'));
+    tl.append(tile('Break-even SAF price', isFinite(ec.beSaf) ? fmtPrice(ec.beSaf, sf, { noUnit: true }) : '—', isFinite(ec.beSaf) ? '/' + UNIT_LABEL[state.unit] : '',
+      'Today ' + fmtPrice(safUsd(state.pathway), sf) + (state.carbonOn ? ', with the carbon price' : '')));
+    tl.append(tile('Break-even jet price', isFinite(ec.beJet) ? fmtPrice(ec.beJet, jf, { noUnit: true }) : '—', isFinite(ec.beJet) ? '/' + UNIT_LABEL[state.unit] : '',
+      'Today ' + fmtPrice(mk.jetUsdT, jf) + (isFinite(ec.beJet) ? ' (' + fmt(M.conv.usdTtoBbl(ec.beJet), 0) + ' $/bbl at break-even)' : '')));
+    tl.append(tile('Break-even carbon price', isFinite(ec.beCarbon) ? money(ec.beCarbon) : '—', isFinite(ec.beCarbon) ? '/tCO₂' : '',
+      state.carbonBasis === 'ets' ? 'On fossil CO₂, as the EU ETS charges it' : 'On life-cycle CO₂e'));
+    tl.append(tile('SAF needed per year', fmt(an.safT, an.safT < 100 ? 1 : 0), 't',
+      fmt(an.safM3, 0) + ' m³ · ' + fmt(ec.safKg, 0) + ' kg per flight'));
+    $('cost-note').textContent = 'per flight, ' + state.currency;
+    $('be-note').textContent = blendName(r) + ', ' + (state.carbonBasis === 'ets' ? 'ETS basis' : 'life-cycle basis');
+    $('be-lede').textContent = 'The line is the carbon price at which the blend costs the same as Jet A-1, for each jet fuel price. Above the line the blend is cheaper. Higher jet prices shrink the SAF premium, so less carbon pricing is needed.';
+  }
+
+  function chartCost(r, t) {
+    const ec = r.ec, b = r.b;
+    const pJ = lastMk.jetUsdT, pS = safUsd(state.pathway);
+    const fossilB = r.m.blend.trip * (1 - b.w) / 1000 * pJ;
+    const safB = r.m.blend.trip * b.w / 1000 * pS;
+    const f = curF();
+    const labels = ['Jet A-1', r.phi > 0 ? blendName(r) : 'Blend (0%)'];
+    const ds = [
+      { label: 'Fossil jet fuel', data: [ec.costJ * f, fossilB * f], backgroundColor: t.jet },
+      { label: 'SAF', data: [0, safB * f], backgroundColor: t.neat }
+    ];
+    if (state.carbonOn) ds.push({ label: state.carbonBasis === 'ets' ? 'Carbon cost (fossil CO₂)' : 'Carbon cost (life-cycle)', data: [ec.carbonCostJ * f, ec.carbonCostB * f], backgroundColor: t.neutral });
+    const lastIdx = i => { let k = -1; ds.forEach((d, j) => { if (d.data[i] > 0) k = j; }); return k; };
+    ds.forEach((d, j) => {
+      d.barThickness = 22; d.borderSkipped = false; d.borderColor = t.surface;
+      d.borderWidth = { top: 0, bottom: 0, left: 0, right: 2 };
+      d.borderRadius = ctx => (lastIdx(ctx.dataIndex) === j ? { topRight: 4, bottomRight: 4, topLeft: 0, bottomLeft: 0 } : 0);
+    });
+    const totals = [0, 1].map(i => ds.reduce((s, d) => s + d.data[i], 0));
+    legend('cost-legend', ds.map(d => ({ label: d.label, color: d.backgroundColor })));
+    upsert('ch-cost', {
+      type: 'bar',
+      data: { labels, datasets: ds },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        layout: { padding: { right: 8 } },
+        scales: {
+          x: axis(t, { tick: v => sym() + fmt(v, 0), extra: { stacked: true, beginAtZero: true, suggestedMax: Math.max(...totals) * 1.22 } }),
+          y: axis(t, { grid: false, extra: { stacked: true, ticks: { color: t.ink2, font: { size: 12, weight: '500' } } } })
+        },
+        plugins: {
+          tooltip: Object.assign(tooltipBase(t), { callbacks: { label: c => ' ' + sym() + fmt(c.raw, 0) + '  ' + c.dataset.label, footer: items => 'Total ' + sym() + fmt(totals[items[0].dataIndex], 0) } }),
+          barValues: { enabled: true, stacked: true, format: v => sym() + fmt(v, 0), color: t.ink }
+        }
+      }
+    });
+    dataTable('tw-cost', ['', 'Fossil jet fuel', 'SAF', 'Carbon cost', 'Total'], [
+      ['Jet A-1', money(ec.costJ), money(0), money(ec.carbonCostJ), money(ec.costJ + ec.carbonCostJ)],
+      [labels[1], money(fossilB), money(safB), money(ec.carbonCostB), money(ec.costB + ec.carbonCostB)]
+    ]);
+  }
+
+  function chartGhg(r, t) {
+    const ec = r.ec;
+    const vals = [ec.ghgJ, ec.ghgB, r.ecNeat.ghgB];
+    const labels = ['Jet A-1', r.phi > 0 ? blendName(r) : 'Blend (0%)', '100% ' + r.P.name + '*'];
+    upsert('ch-ghg', {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 't CO₂e per flight', data: vals, backgroundColor: [t.jet, t.blend, t.neat], barThickness: 22,
+        borderRadius: { topRight: 4, bottomRight: 4 }, borderSkipped: false }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: axis(t, { tick: v => fmt(v, v < 10 ? 1 : 0) + ' t', extra: { beginAtZero: true, suggestedMax: Math.max(...vals) * 1.3 } }),
+          y: axis(t, { grid: false, extra: { ticks: { color: t.ink2, font: { size: 12, weight: '500' } } } })
+        },
+        plugins: {
+          tooltip: Object.assign(tooltipBase(t), { callbacks: { label: c => ' ' + fmt(c.raw, 2) + ' t CO₂e' + (c.dataIndex ? ' (' + fmtSigned((c.raw / vals[0] - 1) * 100, 1) + '%)' : '') } }),
+          barValues: { enabled: true, format: (v, i) => fmt(v, 2) + ' t' + (i ? '  ' + fmtSigned((v / vals[0] - 1) * 100, 0) + '%' : ''), color: t.ink }
+        }
+      }
+    });
+    dataTable('tw-ghg', ['', 't CO₂e per flight', 'vs Jet A-1', 'Fossil CO₂ under ETS (t)'], [
+      ['Jet A-1', fmt(ec.ghgJ, 3), '—', fmt(ec.etsJ, 3)],
+      [labels[1], fmt(ec.ghgB, 3), fmtSigned((ec.ghgB / ec.ghgJ - 1) * 100, 1) + '%', fmt(ec.etsB, 3)],
+      [labels[2] + ' (not certified)', fmt(r.ecNeat.ghgB, 3), fmtSigned((r.ecNeat.ghgB / ec.ghgJ - 1) * 100, 1) + '%', fmt(r.ecNeat.etsB, 3)]
+    ]);
+  }
+
+  function chartBreakEven(r, mk, t) {
+    const ec = r.ec, b = r.b, mj = r.m.jet, mb = r.m.blend;
+    const jf = JET_FUEL(); const f = curF(); const uf = unitFactor(state.unit, jf);
+    const pS = safUsd(state.pathway);
+    const avoided = state.carbonBasis === 'ets' ? ec.dEts : ec.dGhg;
+    const hasCurve = r.phi > 0 && avoided > 1e-9;
+    const lo = M.conv.bblToUsdT(40);
+    let hi = Math.max(M.conv.bblToUsdT(260), mk.jetUsdT * 1.35);
+    if (isFinite(ec.beJet) && ec.beJet > 0) hi = Math.max(hi, Math.min(ec.beJet * 1.12, M.conv.bblToUsdT(700)));
+    const nb = niceBounds(lo * uf * f, hi * uf * f, 7);
+    const xdp = nb.step >= 1 ? 0 : nb.step >= 0.1 ? 1 : 2;
+    const pLo = nb.min / (uf * f), pHi = nb.max / (uf * f);
+    const pts = [];
+    if (hasCurve) for (let i = 0; i <= 60; i++) {
+      const pJ = pLo + (pHi - pLo) * i / 60;
+      const dCost = mb.trip / 1000 * (b.w * pS + (1 - b.w) * pJ) - mj.trip / 1000 * pJ;
+      pts.push({ x: pJ * uf * f, y: dCost / avoided * f });
+    }
+    const carbonNow = mk.carbonUsd * f;
+    const jetNow = mk.jetUsdT * uf * f;
+    const ds = [
+      { type: 'line', label: 'Break-even carbon price', data: pts, borderColor: t.blend, backgroundColor: alpha(t.good.startsWith('#') ? t.good : '#0ca30c', 0.08),
+        borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, fill: 'end', tension: 0 }
+    ];
+    const lines = [
+      { axis: 'x', value: jetNow, color: t.ink2, width: 1, label: 'Jet today ' + sym() + fmt(jetNow, UNIT_DP[state.unit]) + '/' + UNIT_LABEL[state.unit], labelPos: 'top' }
+    ];
+    if (state.carbonOn) lines.push({ axis: 'y', value: carbonNow, color: t.muted, width: 1, dash: [5, 4], label: 'Carbon price today ' + sym() + fmt(carbonNow, 0) + '/t', labelPos: 'left' });
+    lines.push({ axis: 'y', value: 0, color: t.lineStrong, width: 1 });
+    const pl = [];
+    if (hasCurve && isFinite(ec.beJet) && ec.beJet > pLo && ec.beJet < pHi && state.carbonOn) {
+      ds.push({ type: 'scatter', label: 'Break-even at today\'s carbon price', data: [{ x: ec.beJet * uf * f, y: carbonNow }], backgroundColor: t.ink, borderColor: t.surface, borderWidth: 2, pointRadius: 5, pointHoverRadius: 6 });
+      pl.push({ ds: 1, i: 0, text: 'Break-even ' + sym() + fmt(ec.beJet * uf * f, UNIT_DP[state.unit]) + '/' + UNIT_LABEL[state.unit], dx: -8, dy: -14, align: 'right' });
+    }
+    legend('be-legend', [
+      { label: 'Break-even carbon price', color: t.blend, kind: 'line' },
+      { label: 'Blend cheaper than Jet A-1', color: alpha(t.good.startsWith('#') ? t.good : '#0ca30c', 0.22) },
+      { label: 'Carbon price today', color: t.muted, kind: 'ref' }
+    ]);
+    const ys = pts.map(p => p.y).concat([carbonNow, 0]);
+    upsert('ch-be', {
+      type: 'line',
+      data: { datasets: ds },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        scales: {
+          x: axis(t, { title: 'Jet A-1 price (' + unitText() + ')', tick: v => fmt(v, xdp), extra: { type: 'linear', min: nb.min, max: nb.max, ticks: { stepSize: nb.step, color: t.muted, padding: 6, font: { size: 11.5 }, callback: v => fmt(v, xdp) } } }),
+          y: axis(t, { title: 'Carbon price (' + sym() + '/t CO₂)', tick: v => fmt(v, 0), extra: { suggestedMin: Math.min(0, ...ys), suggestedMax: Math.max(...ys) * 1.08 } })
+        },
+        plugins: {
+          tooltip: Object.assign(tooltipBase(t), { callbacks: {
+            title: items => 'Jet ' + sym() + fmt(items[0].parsed.x, UNIT_DP[state.unit]) + '/' + UNIT_LABEL[state.unit],
+            label: c => ' ' + sym() + fmt(c.parsed.y, 0) + '/t CO₂  ' + c.dataset.label } }),
+          refLines: { lines }, crosshair: { enabled: true }, pointLabels: { labels: pl }
+        }
+      }
+    });
+    const tbl = [];
+    if (hasCurve) [60, 80, 100, 120, 150, 180, 200, 250].forEach(bbl => {
+      const pJ = M.conv.bblToUsdT(bbl);
+      const dCost = mb.trip / 1000 * (b.w * pS + (1 - b.w) * pJ) - mj.trip / 1000 * pJ;
+      tbl.push([fmtPrice(pJ, jf), '$' + bbl + '/bbl', money(dCost / avoided) + '/t']);
+    });
+    dataTable('tw-be', ['Jet A-1 price', 'Same in $/bbl', 'Break-even carbon price'], tbl.length ? tbl : [['—', '—', 'Set a SAF share above 0% with a feedstock that cuts emissions']]);
+  }
+
+  // -------------------------------------------------------- performance
+  function pctDelta(a, b) { return b ? (a / b - 1) * 100 : 0; }
+  function meterTile(lbl, val, small, frac, sub) {
+    const tl = tile(lbl, val, small, '');
+    const m = el('div', { class: 'meter' + (frac > 1 ? ' bad' : frac > 0.95 ? ' warn' : '') }, [
+      el('div', { class: 'm-track' }, [el('div', { class: 'm-fill', style: 'width:' + Math.min(100, Math.max(0, frac * 100)).toFixed(1) + '%' })]),
+      el('div', { class: 'm-row' }, [el('span', { text: sub })])
+    ]);
+    tl.append(m);
+    return tl;
+  }
+  function renderPerformanceText(r) {
+    const mj = r.m.jet, mb = r.m.blend, mn = r.m.neat, ac = r.ac;
+    const pb = $('perf-banners'); pb.textContent = ''; missionBanners(r).forEach(b => pb.append(b));
+    const tl = $('perf-tiles'); tl.textContent = '';
+    const name = r.phi > 0 ? blendName(r) : 'Jet A-1';
+    tl.append(tile('Trip fuel burned', fmt(mb.trip, 0), 'kg', fmtSigned(mb.trip - mj.trip, 0) + ' kg (' + fmtSigned(pctDelta(mb.trip, mj.trip), 2) + '%) vs Jet A-1'));
+    tl.append(meterTile('Fuel loaded', fmt(mb.blockL, 0), 'L', mb.blockL / ac.fuelL, fmtSigned(pctDelta(mb.blockL, mj.blockL), 2) + '% vs Jet A-1 · ' + fmt(mb.blockL / ac.fuelL * 100, 0) + '% of ' + fmt(ac.fuelL, 0) + ' L'));
+    tl.append(meterTile('Take-off mass', fmt(mb.tow / 1000, 1), 't', mb.tow / ac.mtow, fmt(mb.tow / ac.mtow * 100, 0) + '% of ' + fmt(ac.mtow / 1000, 1) + ' t MTOW'));
+    tl.append(tile('Cruise TSFC (mass basis)', fmtSigned((r.tsfcRatio - 1) * 100, 2), '%', 'At equal η₀: LHV ' + fmt(r.b.lhv, 2) + ' vs ' + fmt(r.jet.lhv, 2) + ' MJ/kg'));
+    tl.append(tile('Energy per passenger-km', fmt(mb.energy / (r.pax * state.rangeKm), 3), 'MJ', 'Jet A-1 ' + fmt(mj.energy / (r.pax * state.rangeKm), 3) + ' MJ/pkm'));
+    tl.append(tile('Fuel per 100 passenger-km', fmt(mb.tripL / (r.pax * state.rangeKm) * 100, 2), 'L', fmt(mb.trip / (r.pax * state.rangeKm) * 100, 2) + ' kg · Jet A-1 ' + fmt(mj.tripL / (r.pax * state.rangeKm) * 100, 2) + ' L'));
+    tl.append(tile('Range at max payload', fmt(r.pMaxRange.blend, 0), 'km', fmtSigned(r.pMaxRange.blend - r.pMaxRange.jet, 0) + ' km vs Jet A-1 (MTOW-limited)'));
+    tl.append(tile('Ferry range', fmt(r.ferry.blend, 0), 'km', fmtSigned(r.ferry.blend - r.ferry.jet, 0) + ' km vs Jet A-1 (tank-volume-limited)'));
+    $('pr-note').textContent = ac.name + ', ' + fmt(state.adv.paxMass, 0) + ' kg per passenger';
+    $('pr-foot').textContent = 'Left plateau: maximum payload (MZFW). First slope: MTOW-limited, where SAF\'s higher energy per kilogram adds range (+'
+      + fmt(r.pMaxRange.neat - r.pMaxRange.jet, 0) + ' km at max payload for 100% SAF). Last slope: tank-volume-limited, where its lower density costs range ('
+      + fmtSigned(r.ferry.neat - r.ferry.jet, 0) + ' km ferry range).';
+    $('mission-note').textContent = fmt(state.rangeKm, 0) + ' km, ' + fmt(r.pax, 0) + ' passengers';
+    const cols = [mj, mb, mn];
+    const ghg = [r.ec.ghgJ, r.ec.ghgB, r.ecNeat.ghgB];
+    const ets = [r.ec.etsJ, r.ec.etsB, r.ecNeat.etsB];
+    const props = [r.jet, r.b, r.neat];
+    const pkm = r.pax * state.rangeKm;
+    const row = (lbl, f) => [lbl].concat(cols.map((m, i) => f(m, i)));
+    const head = ['', 'Jet A-1', r.phi > 0 ? blendName(r) : 'Blend (0%)', '100% ' + r.P.name + '*'];
+    dataTable('mission-table', head, [
+      row('Trip fuel burned (kg)', m => fmt(m.trip, 0)),
+      row('Reserves and contingency (kg)', m => fmt(m.reserve, 0)),
+      row('Fuel loaded (kg)', m => fmt(m.block, 0)),
+      row('Fuel loaded (L)', m => fmt(m.blockL, 0)),
+      row('Take-off mass (t)', m => fmt(m.tow / 1000, 2)),
+      row('Energy used (GJ)', m => fmt(m.energy / 1000, 1)),
+      row('Energy per pkm (MJ)', m => fmt(m.energy / pkm, 3)),
+      row('Combustion CO₂, physical (t)', (m, i) => fmt(m.trip * (props[i].efPhys || M.EF_JET) / 1000, 2)),
+      row('Fossil CO₂ counted by ETS (t)', (m, i) => fmt(ets[i], 2)),
+      row('Life-cycle CO₂e (t)', (m, i) => fmt(ghg[i], 2)),
+      row('Within MTOW and tanks', m => (m.okMTOW && m.okVol ? 'Yes' : 'No'))
+    ]);
+    // aircraft card
+    $('ac-card-h').textContent = ac.name;
+    const kv = $('ac-kv'); kv.textContent = '';
+    const add = (k, v) => { kv.append(el('dt', { text: k })); kv.append(el('dd', { text: v })); };
+    add('Max take-off mass', fmt(ac.mtow, 0) + ' kg');
+    add('Max zero-fuel mass', fmt(ac.mzfw, 0) + ' kg');
+    add('Operating empty mass', fmt(ac.oew, 0) + ' kg');
+    add('Max payload', fmt(ac.mzfw - ac.oew, 0) + ' kg');
+    add('Fuel capacity', fmt(ac.fuelL, 0) + ' L (' + fmt(ac.fuelL * r.jet.rho / 1000, 0) + ' kg Jet A-1)');
+    add('Published range', fmt(ac.rangePub, 0) + ' km with ' + ac.seats + ' seats');
+    add('Calibrated η₀·L/D', fmt(r.K, 2));
+    add('Breguet range factor (Jet A-1)', fmt(M.brf(r.K, r.jet.lhv) / 1000, 0) + ' km');
+    $('ac-src').textContent = ac.src + ' Calibration reproduces the published range with Jet A-1 at ' + fmt(state.adv.paxMass, 0) + ' kg per seat.';
+  }
+
+  function chartPayloadRange(r, t) {
+    const ds = [
+      { label: 'Jet A-1', data: r.pr.jet, borderColor: t.jet, backgroundColor: t.jet, order: 2 },
+    ];
+    if (r.pr.blend) ds.push({ label: blendName(r), data: r.pr.blend, borderColor: t.blend, backgroundColor: t.blend, order: 1 });
+    ds.push({ label: '100% ' + r.P.name + ' (not certified)', data: r.pr.neat, borderColor: t.neat, backgroundColor: t.neat, order: 3 });
+    ds.forEach(d => { d.type = 'scatter'; d.showLine = true; d.borderWidth = 2; d.pointRadius = 0; d.pointHoverRadius = 4; d.tension = 0; });
+    const mIdx = ds.length;
+    ds.push({ type: 'scatter', label: 'Your mission', data: [{ x: state.rangeKm, y: r.payload / 1000 }], backgroundColor: t.ink, borderColor: t.surface, borderWidth: 2, pointRadius: 6, pointHoverRadius: 7, order: 0 });
+    legend('pr-legend', ds.slice(0, -1).map(d => ({ label: d.label, color: d.borderColor, kind: 'line' })).concat([{ label: 'Your mission', color: t.ink, kind: 'dot' }]));
+    const xmax = Math.max(r.ferry.jet, r.ferry.neat, state.rangeKm) * 1.02;
+    upsert('ch-pr', {
+      type: 'scatter',
+      data: { datasets: ds },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', intersect: false },
+        scales: {
+          x: axis(t, { title: 'Range (km)', tick: v => fmt(v, 0), extra: { min: 0, suggestedMax: xmax } }),
+          y: axis(t, { title: 'Payload (t)', tick: v => fmt(v, 0), extra: { min: 0, suggestedMax: (r.ac.mzfw - r.ac.oew) / 1000 * 1.12 } })
+        },
+        plugins: {
+          tooltip: Object.assign(tooltipBase(t), { callbacks: { label: c => ' ' + fmt(c.parsed.x, 0) + ' km with ' + fmt(c.parsed.y, 1) + ' t  ' + c.dataset.label } }),
+          pointLabels: { labels: [{ ds: mIdx, i: 0, text: 'Your mission', dx: 10, dy: -12 }] }
+        }
+      }
+    });
+    const pts = [['Max payload, MTOW-limited', 'pMaxRange'], ['Ferry, zero payload', 'ferry']];
+    dataTable('tw-pr', ['Corner point', 'Jet A-1 (km)', blendName(r) + ' (km)', '100% SAF (km)'],
+      pts.map(p => [p[0], fmt(r[p[1]].jet, 0), fmt(r[p[1]].blend, 0), fmt(r[p[1]].neat, 0)]));
+  }
+
+  // --------------------------------------------------------------- fuel
+  function renderFuelText(r) {
+    const j = r.jet, s = r.saf, b = r.b, P = r.P;
+    const spec = r.spec;
+    const ok = k => spec.find(x => x.key === k).ok;
+    const red = ci => fmtSigned(-(1 - ci / M.CI_JET) * 100, 1) + '%';
+    const rows = [
+      ['Net heat of combustion (MJ/kg)', fmt(j.lhv, 2), fmt(s.lhv, 2), fmt(b.lhv, 2), '≥ 42.8', okMark(ok('lhv'))],
+      ['Density at 15 °C (kg/m³)', fmt(j.rho, 1), fmt(s.rho, 1), fmt(b.rho, 1), '775–840', okMark(ok('rho'))],
+      ['Energy density (MJ/L)', fmt(j.lhv * j.rho / 1000, 2), fmt(s.lhv * s.rho / 1000, 2), fmt(b.mjL, 2), '—', ''],
+      ['Aromatics (% vol)', fmt(j.arom, 1), fmt(s.arom, 1), fmt(b.arom, 1), r.phi > 0 ? '8–25' : '≤ 25', okMark(ok('arom'))],
+      ['Synthetic share (% vol)', '0', '100', fmt(r.phi * 100, 0), '≤ ' + P.maxBlend, okMark(ok('blend'))],
+      ['Life-cycle CI (gCO₂e/MJ)', fmt(j.ci, 1), fmt(s.ci, 1), fmt(b.ci, 1), '—', ''],
+      ['CI vs fossil jet', '—', red(s.ci), red(b.ci), '—', ''],
+      ['Combustion CO₂ (kg per kg)', fmt(M.EF_JET, 2), fmt(s.ef, 2), fmt(b.efPhys, 3), '—', ''],
+      ['CO₂ counted by EU ETS (kg per kg)', fmt(M.EF_JET, 2), '0', fmt(b.efFossil, 3), '—', ''],
+      ['SAF share by mass / energy', '—', '—', fmt(b.w * 100, 1) + '% / ' + fmt(b.e * 100, 1) + '%', '—', '']
+    ];
+    dataTable('prop-table', ['Property', 'Jet A-1', 'Neat ' + P.name, 'Blend (' + fmt(r.phi * 100, 0) + '%)', 'Limit', 'Blend status'], rows);
+    const w = r.wall;
+    const pc = v => fmt(Math.min(100, v * 100), 0) + '%';
+    $('wall-note').textContent = 'with your Jet A-1: ' + fmt(j.rho, 0) + ' kg/m³, ' + fmt(j.arom, 1) + '% aromatics';
+    $('wall-lede').textContent = 'Maximum blend with this base fuel: ' + pc(w.max) + ', set by ' +
+      (w.binding === 'annex' ? 'the ' + P.annex + ' cap' : w.binding === 'density' ? 'the 775 kg/m³ minimum density' : 'the 8% minimum aromatics (needed for elastomer seal swell)') +
+      '. Density alone would allow ' + pc(w.byRho) + ' and aromatics ' + pc(w.byArom) + '. Lighter or low-aromatic Jet A-1 batches leave less room for SAF.';
+  }
+
+  function chartWall(r, t) {
+    const j = r.jet, s = r.saf, P = r.P;
+    const xs = []; for (let i = 0; i <= 100; i += 2) xs.push(i);
+    const rho = xs.map(x => ({ x, y: x / 100 * s.rho + (1 - x / 100) * j.rho }));
+    const arom = xs.map(x => ({ x, y: x / 100 * s.arom + (1 - x / 100) * j.arom }));
+    const bw = r.phi * 100;
+    const common = (title, data, lim, limLabel, ymin, ymax, unit, dp) => ({
+      type: 'line',
+      data: { datasets: [{ label: title, data, borderColor: t.blend, borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        scales: {
+          x: axis(t, { title: 'SAF share (% vol)', tick: v => v + '%', extra: { type: 'linear', min: 0, max: 100 } }),
+          y: axis(t, { title: title + ' (' + unit + ')', tick: v => fmt(v, dp), extra: { min: ymin, max: ymax } })
+        },
+        plugins: {
+          tooltip: Object.assign(tooltipBase(t), { callbacks: { title: it => fmt(it[0].parsed.x, 0) + '% SAF', label: c => ' ' + fmt(c.parsed.y, dp) + ' ' + unit } }),
+          crosshair: { enabled: true },
+          refLines: {
+            bands: [{ axis: 'y', from: ymin, to: lim, color: t.badWash, label: 'Off-spec' }],
+            lines: [
+              { axis: 'y', value: lim, color: t.bad, width: 1.25, label: limLabel, labelPos: 'right', textColor: t.ink2 },
+              { axis: 'x', value: P.maxBlend, color: t.muted, width: 1, dash: [5, 4], label: 'Annex cap ' + P.maxBlend + '%', labelPos: 'top' },
+              { axis: 'x', value: bw, color: t.ink, width: 1.5, label: 'Your blend ' + fmt(bw, 0) + '%', labelPos: 'bottom' }
+            ]
+          }
+        }
+      }
+    });
+    upsert('ch-rho', common('Blend density', rho, 775, 'Minimum 775 kg/m³', 740, j.rho > 830 ? 860 : 840, 'kg/m³', 0));
+    upsert('ch-arom', common('Blend aromatics', arom, 8, 'Minimum 8% (D7566)', 0, j.arom > 22 ? 30 : 25, '% vol', 0));
+    const lg = [{ label: 'Blend', color: t.blend, kind: 'line' }, { label: 'Specification limit', color: t.bad, kind: 'line' }, { label: 'Off-spec region', color: alpha(t.bad, 0.18) }];
+    legend('wall-legend-rho', lg); legend('wall-legend-arom', lg);
+    dataTable('tw-wall', ['SAF share', 'Density (kg/m³)', 'Aromatics (% vol)', 'Density OK', 'Aromatics OK'],
+      [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(x => {
+        const d = x / 100 * s.rho + (1 - x / 100) * j.rho, a = x / 100 * s.arom + (1 - x / 100) * j.arom;
+        return [x + '%', fmt(d, 1), fmt(a, 1), d >= 775 ? 'Yes' : 'No', (x === 0 || a >= 8) ? 'Yes' : 'No'];
+      }));
+  }
+
+  function chartEnergy(r, t) {
+    const j = r.jet;
+    const pts = [{ name: 'Jet A-1', lhv: j.lhv, mjL: j.lhv * j.rho / 1000, kind: 'jet' }];
+    const seen = {};
+    M.PATHWAY_ORDER.forEach(pid => {
+      const P = M.PATHWAYS[pid];
+      const sel = pid === state.pathway;
+      const lhv = sel ? r.saf.lhv : P.lhv, rho = sel ? r.saf.rho : P.rho;
+      const key = lhv.toFixed(2) + '/' + rho.toFixed(1);
+      if (seen[key]) { seen[key].name += ' / ' + P.name; return; }
+      const p = { name: P.name, lhv, mjL: lhv * rho / 1000, kind: 'saf' };
+      seen[key] = p; pts.push(p);
+    });
+    if (r.phi > 0) pts.push({ name: blendName(r), lhv: r.b.lhv, mjL: r.b.mjL, kind: 'blend' });
+    const groups = [
+      { label: 'Jet A-1', kind: 'jet', color: t.jet },
+      { label: 'SAF blendstocks (neat)', kind: 'saf', color: t.neat },
+      { label: 'Your blend', kind: 'blend', color: t.blend }
+    ].filter(g => pts.some(p => p.kind === g.kind));
+    const ds = groups.map(g => ({ type: 'scatter', label: g.label, data: pts.filter(p => p.kind === g.kind).map(p => ({ x: p.lhv, y: p.mjL, n: p.name })),
+      backgroundColor: g.color, borderColor: t.surface, borderWidth: 2, pointRadius: 6, pointHoverRadius: 7 }));
+    const pl = [];
+    ds.forEach((d, di) => d.data.forEach((p, i) => pl.push({ ds: di, i, text: p.n, dx: 10, dy: d.label === 'Your blend' ? 14 : -1 })));
+    legend('ed-legend', groups.map(g => ({ label: g.label, color: g.color, kind: 'dot' })));
+    const xs = pts.map(p => p.lhv), ys = pts.map(p => p.mjL);
+    upsert('ch-ed', {
+      type: 'scatter', data: { datasets: ds },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: axis(t, { title: 'Specific energy, LHV (MJ/kg)', tick: v => fmt(v, 1), extra: { min: Math.floor((Math.min(...xs) - 0.3) * 5) / 5, max: Math.ceil((Math.max(...xs) + 0.6) * 5) / 5 } }),
+          y: axis(t, { title: 'Energy density (MJ/L)', tick: v => fmt(v, 1), extra: { min: Math.floor((Math.min(...ys) - 0.4) * 5) / 5, max: Math.ceil((Math.max(...ys) + 0.4) * 5) / 5 } })
+        },
+        plugins: {
+          tooltip: Object.assign(tooltipBase(t), { callbacks: { label: c => ' ' + c.raw.n + ': ' + fmt(c.parsed.x, 2) + ' MJ/kg, ' + fmt(c.parsed.y, 2) + ' MJ/L' } }),
+          pointLabels: { labels: pl }
+        }
+      }
+    });
+    dataTable('tw-ed', ['Fuel', 'MJ/kg', 'MJ/L', 'MJ/kg vs Jet A-1', 'MJ/L vs Jet A-1'],
+      pts.map(p => [p.name, fmt(p.lhv, 2), fmt(p.mjL, 2), fmtSigned(pctDelta(p.lhv, pts[0].lhv), 1) + '%', fmtSigned(pctDelta(p.mjL, pts[0].mjL), 1) + '%']));
+  }
+
+  // ------------------------------------------------------------ pathways
+  function renderPathwaysText(r, mk) {
+    const rows = r.rows.slice().sort((a, b) => {
+      const av = isFinite(a.abate) ? a.abate : Infinity, bv = isFinite(b.abate) ? b.abate : Infinity;
+      return av - bv;
+    });
+    $('rows-note').textContent = 'at ' + fmt((r.phi > 0 ? r.phi : 0.1) * 100, 0) + '% blend, ' + fmt(state.rangeKm, 0) + ' km ' + r.ac.short + ', sorted by abatement cost';
+    $('ab-note').textContent = sym() + ' per tCO₂e, fuel cost only';
+    const tb = dataTable('rows-table', ['Pathway', 'Feedstock', 'Core', 'Land use', 'Total gCO₂e/MJ', 'vs fossil', 'Price (' + unitText() + ')', 'Abatement (' + sym() + '/tCO₂e)', 'Break-even ETS (' + sym() + '/t)'],
+      rows.map(x => {
+        const P = M.PATHWAYS[x.pathway];
+        return {
+          attrs: { class: 'clickable' + (x.selected ? ' sel' : ''), 'data-pid': x.pathway, 'data-fid': x.feedstock, tabindex: '0', title: 'Use this option in your scenario' },
+          cells: [x.pathwayName, x.feedstockName, fmt(x.core, 1), x.iluc ? fmtSigned(x.iluc, 1) : '0', fmt(x.ci, 1), fmtSigned(-x.red, 0) + '%',
+            fmtPrice(x.price, { rho: P.rho, lhv: P.lhv }, { noUnit: true }), isFinite(x.abate) ? money(x.abate) : 'No saving',
+            isFinite(x.beCarbonEts) ? money(x.beCarbonEts) : (x.etsEligible ? '—' : 'Not zero-rated')]
+        };
+      }), { leftCols: [0, 1], nowrap: true });
+    if (tb) tb.querySelectorAll('tr.clickable').forEach(tr => {
+      const go = () => {
+        state.pathway = tr.dataset.pid; state.feedstock[tr.dataset.pid] = tr.dataset.fid;
+        state.adv.safLhv = null; state.adv.safRho = null;
+        syncControls(); schedule();
+        if (state.blendPct === 0) { state.blendPct = 10; syncControls(); }
+        showToast('Loaded ' + M.PATHWAYS[tr.dataset.pid].name + ', ' + tr.cells[1].textContent);
+      };
+      tr.addEventListener('click', go);
+      tr.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
+    // LH2
+    $('lh2-body').hidden = !state.showLH2;
+    const lt = $('lh2-tiles'); lt.textContent = '';
+    if (state.showLH2 && r.lh2) {
+      const h = r.lh2;
+      lt.append(tile('Energy per flight vs Jet A-1', fmtSigned((h.energyRatio - 1) * 100, 1), '%', 'Tank mass and drag penalty on the same mission'));
+      lt.append(tile('Tank mass', fmt(h.m.tankMass / 1000, 2), 't', 'Gravimetric index ' + fmt(h.opt.etaGrav, 2) + ', sized for this mission'));
+      lt.append(tile('Tank volume', fmt(h.m.tankM3, 1), 'm³', fmt(h.m.block, 0) + ' kg LH₂ at 70.8 kg/m³, 7% ullage'));
+      lt.append(tile('LH₂ price', money(h.price / 1000, { dp: 2 }), '/kg', money(h.priceGJ, { dp: 1 }) + '/GJ vs Jet A-1 ' + money(lastMk.jetUsdT / r.jet.lhv, { dp: 1 }) + '/GJ'));
+      lt.append(tile('Life-cycle CI', fmt(h.ci, 1), 'g/MJ', 'Electrolysis + liquefaction at ' + state.gridG + ' g/kWh'));
+      lt.append(tile('Abatement cost', isFinite(h.abate) ? money(h.abate) : '—', '/tCO₂e', 'Fuel cost only; excludes the new aircraft and airport infrastructure'));
+    }
+  }
+
+  function chartCI(r, t) {
+    const rows = r.rows.slice().sort((a, b) => a.ci - b.ci);
+    const n = rows.length;
+    $('ci-box').style.height = Math.max(420, n * 24 + 70) + 'px';
+    const colors = rows.map(x => x.selected ? t.blend : (x.ci >= M.CI_JET ? t.bad : t.neutral));
+    legend('ci-legend', [{ label: 'Your selection', color: t.blend }, { label: 'Other options', color: t.neutral }, { label: 'Higher than fossil', color: t.bad }, { label: 'Fossil jet, 89', color: t.jet, kind: 'line' }]);
+    upsert('ch-ci', {
+      type: 'bar',
+      data: { labels: rows.map(x => x.pathwayName.replace('-SPK', '').replace(' e-SPK', '') + ' · ' + x.feedstockName), datasets: [{ label: 'gCO₂e/MJ', data: rows.map(x => x.ci), backgroundColor: colors, barThickness: 14, borderRadius: { topRight: 4, bottomRight: 4 }, borderSkipped: false }] },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: axis(t, { title: 'gCO₂e/MJ', tick: v => fmt(v, 0), extra: { min: 0, max: 120, ticks: { stepSize: 20, color: t.muted, padding: 6, font: { size: 11.5 } } } }),
+          y: axis(t, { grid: false, extra: { ticks: { color: t.ink2, font: { size: 11 }, autoSkip: false } } })
+        },
+        plugins: {
+          tooltip: Object.assign(tooltipBase(t), { callbacks: { label: c => { const x = rows[c.dataIndex]; return ' ' + fmt(x.ci, 1) + ' gCO₂e/MJ (core ' + fmt(x.core, 1) + ', land use ' + fmtSigned(x.iluc, 1) + ')'; } } }),
+          barValues: { enabled: true, format: v => fmt(v, 1), color: t.ink2 },
+          refLines: { lines: [{ axis: 'x', value: M.CI_JET, color: t.jet, width: 1.5, label: 'Fossil jet 89', labelPos: 'top' }] }
+        }
+      }
+    });
+  }
+
+  function chartAbate(r, mk, t) {
+    const shapes = { HEFA: 'circle', FT: 'rect', ATJ: 'triangle', PTL: 'rectRot' };
+    const ok = r.rows.filter(x => isFinite(x.abate));
+    const f = curF();
+    const ds = M.PATHWAY_ORDER.map(pid => ({
+      type: 'scatter', label: M.PATHWAYS[pid].name,
+      data: ok.filter(x => x.pathway === pid).map(x => ({ x: x.red, y: x.abate * f, n: x.feedstockName, sel: x.selected })),
+      pointStyle: shapes[pid],
+      backgroundColor: ctx => (ctx.raw && ctx.raw.sel ? t.blend : t.neutral),
+      borderColor: t.surface, borderWidth: 1.5,
+      pointRadius: ctx => (ctx.raw && ctx.raw.sel ? 8 : 6), pointHoverRadius: 8
+    }));
+    const pl = [];
+    ds.forEach((d, di) => d.data.forEach((p, i) => { if (p.sel) pl.push({ ds: di, i, text: p.n, dx: 12, dy: -2 }); }));
+    const box = $('ab-legend'); box.textContent = '';
+    const shapeSvg = { HEFA: '<circle cx="6" cy="6" r="4.5"/>', FT: '<rect x="1.5" y="1.5" width="9" height="9"/>', ATJ: '<path d="M6 1.2l5 9.3H1z"/>', PTL: '<path d="M6 .8l5.2 5.2L6 11.2.8 6z"/>' };
+    M.PATHWAY_ORDER.forEach(pid => box.append(el('span', {}, [el('span', { html: '<svg width="12" height="12" viewBox="0 0 12 12" fill="' + t.neutral + '">' + shapeSvg[pid] + '</svg>', style: 'display:inline-flex' }), document.createTextNode(M.PATHWAYS[pid].name)])));
+    box.append(el('span', {}, [el('i', { class: 'dot', style: 'background:' + t.blend }), document.createTextNode('Your selection')]));
+    box.append(el('span', {}, [el('i', { class: 'ref', style: 'border-top-color:' + t.muted }), document.createTextNode('Carbon price today')]));
+    const ys = ok.map(x => x.abate * f);
+    upsert('ch-ab', {
+      type: 'scatter', data: { datasets: ds },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: axis(t, { title: 'Life-cycle CO₂e reduction vs fossil jet (%)', tick: v => fmt(v, 0) + '%', extra: { min: 0, max: 100 } }),
+          y: axis(t, { title: 'Abatement cost (' + sym() + '/tCO₂e)', tick: v => fmt(v, 0), extra: { min: 0, suggestedMax: Math.max(...ys, mk.carbonUsd * f) * 1.08 } })
+        },
+        plugins: {
+          tooltip: Object.assign(tooltipBase(t), { callbacks: { label: c => ' ' + c.dataset.label + ', ' + c.raw.n + ': ' + sym() + fmt(c.parsed.y, 0) + '/t at ' + fmt(c.parsed.x, 0) + '% cut' } }),
+          pointLabels: { labels: pl },
+          refLines: { lines: [{ axis: 'y', value: mk.carbonUsd * f, color: t.muted, dash: [5, 4], width: 1, label: 'Carbon price today ' + sym() + fmt(mk.carbonUsd * f, 0) + '/t', labelPos: 'left' }] }
+        }
+      }
+    });
+  }
+
+  // -------------------------------------------------------------- market
+  const toTs = s => { const p = s.split('-').map(Number); return Date.UTC(p[0], p[1] - 1, p[2] || 15); };
+  function renderMarketText(mk) {
+    const jf = JET_FUEL();
+    const a = (txt, url) => { const u = safeUrl(url); return u ? el('a', { href: u, target: '_blank', rel: 'noopener', text: txt }) : document.createTextNode(txt); };
+    dataTable('feed-table', ['Series', 'Value', 'As of', 'Source'], [
+      ['Jet A-1, IATA global average', fmtPrice(mk.iataUsdT, jf) + ' ($' + fmt(feed.jet.iata.usd_bbl, 2) + '/bbl)', feed.jet.iata.period || '', a(feed.jet.iata.source || 'IATA', feed.jet.iata.url)],
+      ['Jet fuel, US Gulf Coast spot', fmtPrice(mk.usgcUsdT, jf) + ' ($' + fmt(feed.jet.usgc.usd_gal, 3) + '/gal)', fmtDate(feed.jet.usgc.date), a(feed.jet.usgc.source || 'EIA', feed.jet.usgc.url)],
+      ['EU ETS allowance', '€' + fmt(feed.carbon.eua_eur_t, 2) + '/t (' + money(mk.euaUsd, { dp: 2 }) + ')', fmtDate(feed.carbon.date), a(feed.carbon.source || 'EEX', feed.carbon.url)],
+      ['SAF (HEFA), NW Europe', '$' + fmt(feed.saf.hefa_usd_t, 0) + '/t', feed.saf.period || '', a(feed.saf.source || 'BloombergNEF', feed.saf.url)],
+      ['Exchange rates', '$' + fmt(feed.fx.usd_per_eur, 4) + '/€ · £' + fmt(feed.fx.gbp_per_eur, 5) + '/€', fmtDate(feed.fx.date), a('ECB', feed.fx.url)]
+    ], { leftCols: [0, 3] });
+    $('feed-note').textContent = feedMode === 'live' ? 'live feed, updated ' + fmtStamp(feed.updated_at) : feedMode === 'stale' ? 'feed last updated ' + fmtStamp(feed.updated_at) : 'published snapshot, ' + fmtStamp(feed.updated_at);
+    $('market-lede').textContent = 'Prices feeding the calculator, where they come from, and how they have moved. ' +
+      (feedMode === 'live' ? 'Prices are refreshed automatically on weekday mornings.' : feedMode === 'stale' ? 'The feed has not refreshed for a few days, so these are its last values.' : 'Showing the snapshot built into the page; the price file could not be loaded.');
+    const E = M.USD_PER_EUR_2025;
+    const refs = [
+      ['EASA 2025 reference: conventional jet', '€640/t', '$' + fmt(640 * E, 0) + '/t', a('EASA via SAF Investor', 'https://www.safinvestor.com/news/149690/easa-2025/')],
+      ['EASA 2025 reference: aviation biofuels (HEFA)', '€1,925/t', '$' + fmt(1925 * E, 0) + '/t', a('EASA via SAF Investor', 'https://www.safinvestor.com/news/149690/easa-2025/')],
+      ['2025 price: advanced aviation biofuels', '€3,036/t', '$' + fmt(3036 * E, 0) + '/t', a('European Commission notice C/2026/2992', 'https://eur-lex.europa.eu/eli/C/2026/2992/oj')],
+      ['2025 price: renewable hydrogen for aviation', '€8,476/t', '$' + fmt(8476 * E, 0) + '/t', a('European Commission notice C/2026/2992', 'https://eur-lex.europa.eu/eli/C/2026/2992/oj')],
+      ['EASA 2025 estimate: synthetic aviation fuels', '€7,520/t', '$' + fmt(7520 * E, 0) + '/t', a('EASA via SAF Investor', 'https://www.safinvestor.com/news/149690/easa-2025/')],
+      ['Platts HEFA-SPK CIF NWE, 11 Mar 2026', '$2,640/t', 'jet $1,500.75/t', a('S&P Global via AvNet', 'https://www.avnetmag.com/sustainable-aviation-fuel-cost-2026')],
+      ['BNEF Europe SAF, 2Q 2026 average', '$2,830/t', 'jet NWE $1,404/t', a('BloombergNEF', 'https://about.bnef.com/insights/clean-energy/sustainable-aviation-fuel-price-outlook-leveling-off/')],
+      ['IATA 2026 assumption, average SAF price', '$2,872/t', 'jet $152/bbl', a('IATA fuel fact sheet', 'https://www.iata.org/en/iata-repository/pressroom/fact-sheets/fact-sheet-fuel/')],
+      ['UK SAF Mandate buy-out, main / PtL', '£5,875 / £6,250 per t', '—', a('IATA via CAPA', 'https://centreforaviation.com/news/iata-uk-caps-on-hefa-saf-and-e-saf-to-drive-up-costs-without-any-associated-emissions-reductions-1368073')]
+    ];
+    dataTable('ref-table', ['Reference', 'Value', 'Comparison', 'Source'], refs, { leftCols: [0, 3] });
+    $('hist-note').textContent = unitText() + ', converted at ' + fmt(M.BBL_PER_T, 3) + ' bbl/t';
+  }
+
+  function chartHistory(t) {
+    const jf = JET_FUEL(); const uf = unitFactor(state.unit, jf); const f = curF();
+    const cv = usdT => usdT * uf * f;
+    const monthly = feed.history.usgc_monthly.map(p => ({ x: toTs(p[0]), y: cv(M.conv.galToUsdT(p[1])), d: p[0] }));
+    const daily = feed.history.usgc_daily.map(p => ({ x: toTs(p[0]), y: cv(M.conv.galToUsdT(p[1])), d: p[0] }));
+    const iata = feed.history.iata_weekly.map(p => ({ x: toTs(p[0]), y: cv(M.conv.bblToUsdT(p[1])), d: p[0], approx: !!p[2] }));
+    const ds = [
+      { type: 'line', label: 'US Gulf Coast spot, monthly average (EIA)', data: monthly, borderColor: t.blend, backgroundColor: alpha(t.blend.startsWith('#') ? t.blend : '#2a78d6', 0.08), fill: 'origin', borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0 },
+      { type: 'line', label: 'US Gulf Coast spot, daily (EIA)', data: daily, borderColor: t.blend, backgroundColor: t.blend, borderWidth: 1.5, pointRadius: 2.5, pointHoverRadius: 4, tension: 0 },
+      { type: 'scatter', label: 'IATA global average, weekly', data: iata, backgroundColor: t.jet, borderColor: t.surface, borderWidth: 2, pointRadius: 5, pointHoverRadius: 6 }
+    ];
+    legend('hist-legend', [
+      { label: 'US Gulf Coast spot, monthly average (EIA)', color: t.blend, kind: 'line' },
+      { label: 'US Gulf Coast spot, latest days', color: t.blend, kind: 'dot' },
+      { label: 'IATA global average, weekly reports', color: t.jet, kind: 'dot' }
+    ]);
+    const all = monthly.concat(daily, iata);
+    const xmin = Math.min(...all.map(p => p.x)) - 864e5 * 10, xmax = Math.max(...all.map(p => p.x)) + 864e5 * 20;
+    const lastIata = iata[iata.length - 1];
+    upsert('ch-hist', {
+      type: 'line', data: { datasets: ds },
+      options: {
+        responsive: true, maintainAspectRatio: false, interaction: { mode: 'nearest', axis: 'x', intersect: false },
+        scales: {
+          x: axis(t, { tick: v => new Date(v).toLocaleDateString('en-GB', { month: 'short', year: '2-digit', timeZone: 'UTC' }),
+            extra: { type: 'linear', min: xmin, max: xmax,
+              afterBuildTicks: sc => {
+                const ticks = []; const d0 = new Date(sc.min); let y = d0.getUTCFullYear(), m = Math.ceil(d0.getUTCMonth() / 3) * 3;
+                for (let k = 0; k < 40; k++) { const ts = Date.UTC(y, m, 1); if (ts > sc.max) break; if (ts >= sc.min) ticks.push({ value: ts }); m += 3; if (m >= 12) { m -= 12; y++; } }
+                sc.ticks = ticks;
+              } } }),
+          y: axis(t, { title: 'Price (' + unitText() + ')', tick: v => fmt(v, UNIT_DP[state.unit] > 2 ? 2 : UNIT_DP[state.unit] === 2 ? 0 : 0), extra: { beginAtZero: true } })
+        },
+        plugins: {
+          tooltip: Object.assign(tooltipBase(t), { callbacks: {
+            title: it => { const p = it[0].raw; return (p.approx ? '≈ ' : '') + (p.d.length === 7 ? fmtDate(p.d) : fmtDate(p.d)); },
+            label: c => ' ' + sym() + fmt(c.parsed.y, UNIT_DP[state.unit]) + '/' + UNIT_LABEL[state.unit] + '  ' + c.dataset.label } }),
+          crosshair: { enabled: true },
+          pointLabels: { labels: lastIata ? [{ ds: 2, i: iata.length - 1, text: 'IATA ' + sym() + fmt(lastIata.y, UNIT_DP[state.unit]), dx: -10, dy: -16, align: 'right' }] : [] }
+        }
+      }
+    });
+    const rows = [];
+    feed.history.usgc_monthly.slice().reverse().forEach(p => rows.push([fmtDate(p[0]), 'US Gulf Coast, monthly average', '$' + fmt(p[1], 3) + '/gal', fmtPrice(M.conv.galToUsdT(p[1]), jf)]));
+    feed.history.iata_weekly.slice().reverse().forEach(p => rows.push([(p[2] ? '≈ ' : '') + fmtDate(p[0]), 'IATA global, weekly', '$' + fmt(p[1], 2) + '/bbl', fmtPrice(M.conv.bblToUsdT(p[1]), jf)]));
+    dataTable('tw-hist', ['Period', 'Series', 'Quoted', 'In display units'], rows, { leftCols: [0, 1] });
+  }
+
+  // ---------------------------------------------------------- sources
+  const SOURCES = [
+    ['IATA Jet Fuel Price Monitor (S&P Global Platts data)', 'https://www.iata.org/en/publications/economics/fuel-monitor/'],
+    ['U.S. EIA, Kerosene-type jet fuel spot price, U.S. Gulf Coast (FRED series DJFUELUSGULF)', 'https://fred.stlouisfed.org/series/DJFUELUSGULF'],
+    ['U.S. EIA, Weekly Petroleum Status Report, Table 12 (monthly averages)', 'https://www.eia.gov/petroleum/supply/weekly/pdf/table12.pdf'],
+    ['EUA Dec-26 futures, historical data (Investing.com)', 'https://www.investing.com/commodities/european-union-allowance-eua-year-futures-historical-data'],
+    ['ECB euro foreign exchange reference rates', 'https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/eurofxref-graph-usd.en.html'],
+    ['BloombergNEF, Sustainable Aviation Fuel Weekly: NW Europe 3Q 2026 average', 'https://www.bnef.com/insights/40591'],
+    ['BloombergNEF, Sustainable Aviation Fuel Price Outlook: Leveling Off (Jul 2026)', 'https://about.bnef.com/insights/clean-energy/sustainable-aviation-fuel-price-outlook-leveling-off/'],
+    ['ICAO, CORSIA Default Life Cycle Emissions Values for CORSIA Eligible Fuels (June 2025)', 'https://www.icao.int/sites/default/files/environmental-protection/CORSIA/Documents/CORSIA%20Eligible%20Fuels/ICAO-document-06-Default-Life-Cycle-Emissions-June-2025.pdf'],
+    ['European Commission notice C/2026/2992: 2025 prices of eligible aviation fuels', 'https://eur-lex.europa.eu/eli/C/2026/2992/oj'],
+    ['SAF Investor, EASA publishes 2025 reference prices for ReFuelEU Aviation', 'https://www.safinvestor.com/news/149690/easa-2025/'],
+    ['EASA, 2024 Aviation Fuels Reference Prices briefing note', 'https://www.easa.europa.eu/en/downloads/141675/en'],
+    ['IATA, SAF blending considerations (ASTM D1655 / D7566 limits), 2025', 'https://www.iata.org/contentassets/e4f40ac1619c411f8ce5ccf4acffcd42/amardeep-mudhar_iata-2025-baku-saf-blending-considerations--document-awareness-version-for-iata_approved.pdf'],
+    ['ASTM D7566 specification summary (aromatics minimum 8%, density 775–840 kg/m³)', 'https://store.astm.org/d7566-12a.html'],
+    ['Jet A-1 and HEFA blend property data, Processes 12(6) 1045 (2024)', 'https://mdpi.com/2227-9717/12/6/1045'],
+    ['Airbus A320neo key figures', 'https://aircraft.airbus.com/en/aircraft/a320-family/a320neo'],
+    ['Airbus A350-900 key figures', 'https://aircraft.airbus.com/en/aircraft/a350/a350-900'],
+    ['Boeing 737 MAX Airplane Characteristics for Airport Planning (D6-38A004)', 'https://www.boeing.com/content/dam/boeing/boeingdotcom/commercial/airports/acaps/737MAX_RevK.pdf'],
+    ['IATA fuel fact sheet (2026 jet and SAF price assumptions)', 'https://www.iata.org/en/iata-repository/pressroom/fact-sheets/fact-sheet-fuel/'],
+    ['IATA Global Outlook for Air Transport, June 2026', 'https://www.iata.org/en/iata-repository/publications/economic-reports/global-outlook-for-air-transport-june-2026/']
+  ];
+  function renderSources() {
+    const ol = $('src-list'); ol.textContent = '';
+    SOURCES.forEach(s => ol.append(el('li', {}, [el('a', { href: s[1], target: '_blank', rel: 'noopener', text: s[0] })])));
+  }
+
+  // ------------------------------------------------------------ export
+  function scenarioCsv() {
+    const r = last, mk = lastMk; if (!r) return '';
+    const q = v => { const s = String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const rows = [['Section', 'Item', 'Value', 'Unit']];
+    const add = (a, b, c, d) => rows.push([a, b, c, d]);
+    add('Inputs', 'Aircraft', r.ac.name, ''); add('Inputs', 'Stage length', state.rangeKm, 'km');
+    add('Inputs', 'Passengers', r.pax, ''); add('Inputs', 'Payload', Math.round(r.payload), 'kg');
+    add('Inputs', 'Flights per year (total)', r.nFlights, '');
+    add('Inputs', 'Pathway', r.P.name, ''); add('Inputs', 'Feedstock', r.fci.f.name, '');
+    add('Inputs', 'SAF share', state.blendPct, '% vol');
+    add('Inputs', 'Jet A-1 price', mk.jetUsdT.toFixed(1), 'USD/t'); add('Inputs', 'Jet price basis', state.jetBasis, '');
+    add('Inputs', 'SAF price', safUsd(state.pathway).toFixed(1), 'USD/t');
+    add('Inputs', 'Carbon price', state.carbonOn ? mk.carbonUsd.toFixed(2) : 'off', 'USD/tCO2'); add('Inputs', 'Carbon basis', state.carbonBasis, '');
+    add('Fuel', 'SAF life-cycle CI', r.saf.ci.toFixed(2), 'gCO2e/MJ'); add('Fuel', 'Blend LHV', r.b.lhv.toFixed(3), 'MJ/kg');
+    add('Fuel', 'Blend density', r.b.rho.toFixed(1), 'kg/m3'); add('Fuel', 'Blend aromatics', r.b.arom.toFixed(2), '% vol');
+    add('Performance', 'Calibrated eta0*L/D', r.K.toFixed(3), '');
+    add('Performance', 'Trip fuel Jet A-1', r.m.jet.trip.toFixed(1), 'kg'); add('Performance', 'Trip fuel blend', r.m.blend.trip.toFixed(1), 'kg');
+    add('Performance', 'Fuel loaded Jet A-1', r.m.jet.blockL.toFixed(0), 'L'); add('Performance', 'Fuel loaded blend', r.m.blend.blockL.toFixed(0), 'L');
+    add('Performance', 'TOW blend', r.m.blend.tow.toFixed(0), 'kg');
+    add('Performance', 'Range at max payload Jet/blend/neat', [r.pMaxRange.jet, r.pMaxRange.blend, r.pMaxRange.neat].map(v => v.toFixed(0)).join(' / '), 'km');
+    add('Performance', 'Ferry range Jet/blend/neat', [r.ferry.jet, r.ferry.blend, r.ferry.neat].map(v => v.toFixed(0)).join(' / '), 'km');
+    const e = r.ec;
+    add('Per flight', 'Fuel cost Jet A-1', e.costJ.toFixed(2), 'USD'); add('Per flight', 'Fuel cost blend', e.costB.toFixed(2), 'USD');
+    add('Per flight', 'Life-cycle CO2e Jet A-1', e.ghgJ.toFixed(4), 't'); add('Per flight', 'Life-cycle CO2e blend', e.ghgB.toFixed(4), 't');
+    add('Per flight', 'CO2e avoided', e.dGhg.toFixed(4), 't'); add('Per flight', 'ETS fossil CO2 avoided', e.dEts.toFixed(4), 't');
+    add('Per flight', 'Extra fuel cost', e.dCost.toFixed(2), 'USD'); add('Per flight', 'Carbon cost avoided', e.carbonSaving.toFixed(2), 'USD');
+    add('Per flight', 'Net cost', e.net.toFixed(2), 'USD'); add('Per flight', 'Net cost per passenger', r.perPax.net.toFixed(3), 'USD');
+    add('Per year', 'CO2e avoided', r.annual.dGhg.toFixed(1), 't'); add('Per year', 'Net cost', r.annual.net.toFixed(0), 'USD');
+    add('Per year', 'SAF required', r.annual.safT.toFixed(1), 't');
+    add('Results', 'Abatement cost', isFinite(e.abate) ? e.abate.toFixed(1) : '', 'USD/tCO2e');
+    add('Results', 'Break-even carbon price', isFinite(e.beCarbon) ? e.beCarbon.toFixed(1) : '', 'USD/tCO2');
+    add('Results', 'Break-even SAF price', isFinite(e.beSaf) ? e.beSaf.toFixed(1) : '', 'USD/t');
+    add('Results', 'Break-even jet price', isFinite(e.beJet) ? e.beJet.toFixed(1) : '', 'USD/t');
+    add('Feed', 'Prices updated', feed.updated_at, ''); add('Feed', 'IATA global', feed.jet.iata.usd_bbl, 'USD/bbl');
+    add('Feed', 'US Gulf Coast spot', feed.jet.usgc.usd_gal + ' (' + feed.jet.usgc.date + ')', 'USD/gal');
+    add('Feed', 'EUA', feed.carbon.eua_eur_t + ' (' + feed.carbon.date + ')', 'EUR/t');
+    return rows.map(r2 => r2.map(q).join(',')).join('\n');
+  }
+  function exportCsv() {
+    const csv = scenarioCsv(); if (!csv) return;
+    const name = 'saf-scenario-' + state.acId + '-' + state.pathway.toLowerCase() + '-' + state.blendPct + 'pct.csv';
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = el('a', { href: url, download: name }); document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    showToast('Scenario downloaded');
+  }
+  let toastTimer = 0;
+  function showToast(text) {
+    let tst = document.querySelector('.toast');
+    if (!tst) { tst = el('div', { class: 'toast', role: 'status' }); document.body.append(tst); }
+    tst.textContent = text; tst.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { tst.hidden = true; }, 2600);
+  }
+
+  // ---------------------------------------------------------- views
+  const VIEWS = ['savings', 'performance', 'fuel', 'pathways', 'market', 'method'];
+  function showView(v) {
+    if (!VIEWS.includes(v)) v = 'savings';
+    activeView = v;
+    VIEWS.forEach(n => {
+      $('view-' + n).classList.toggle('active', n === v);
+      const tab = $('tab-' + n); tab.setAttribute('aria-selected', String(n === v)); tab.tabIndex = n === v ? 0 : -1;
+    });
+    renderCharts(v);
+  }
+  function viewFromHash() { const h = (location.hash || '').replace('#', ''); return VIEWS.includes(h) ? h : 'savings'; }
+
+  // ------------------------------------------------------------ init
+  function init() {
+    initControls();
+    renderSources();
+    const form = $('criteria');
+    form.addEventListener('input', onInput);
+    form.addEventListener('change', e => { if (e.target.type === 'radio' || e.target.tagName === 'SELECT' || e.target.type === 'checkbox') onInput(e); else syncControls(); });
+    form.addEventListener('click', onClick);
+    form.addEventListener('submit', e => e.preventDefault());
+    document.querySelector('.mast-controls').addEventListener('change', onInput);
+    $('in-lh2').addEventListener('change', onInput);
+    ['in-lh2-eta', 'in-lh2-ld'].forEach(id => $(id).addEventListener('input', onInput));
+    $('btn-reset').addEventListener('click', () => { const keep = { currency: state.currency, unit: state.unit }; state = Object.assign(clone(DEFAULTS), keep); syncControls(); schedule(); showToast('Default scenario restored'); });
+    $('btn-export').addEventListener('click', exportCsv);
+    $('btn-rail').addEventListener('click', () => {
+      const rail = document.querySelector('.rail'); const open = !rail.classList.contains('open');
+      rail.classList.toggle('open', open); $('btn-rail').setAttribute('aria-expanded', String(open));
+      $('btn-rail').textContent = open ? 'Done' : 'Edit';
+    });
+    window.addEventListener('hashchange', () => showView(viewFromHash()));
+    document.querySelector('.tabs').addEventListener('keydown', e => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const i = VIEWS.indexOf(activeView) + (e.key === 'ArrowRight' ? 1 : -1);
+      const v = VIEWS[(i + VIEWS.length) % VIEWS.length];
+      location.hash = v; $('tab-' + v).focus();
+    });
+    // theme changes re-colour the charts
+    const rerender = () => renderCharts(activeView);
+    new MutationObserver(rerender).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'class', 'style'] });
+    if (window.matchMedia) { const mq = window.matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', rerender); }
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(rerender);
+    setFeedMode('snapshot');
+    activeView = viewFromHash();
+    VIEWS.forEach(n => { $('view-' + n).classList.toggle('active', n === activeView); $('tab-' + n).setAttribute('aria-selected', String(n === activeView)); });
+    render();
+    connectFeed();
+  }
+
+  // If the CDN copy of Chart.js is blocked, try the cdnjs mirror once.
+  function ensureChartJs(done) {
+    if (window.Chart) return done();
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js';
+    s.onload = () => { done(); };
+    s.onerror = () => { done(); };
+    document.head.append(s);
+  }
+
+  if (!M || !SNAPSHOT) {
+    document.body.prepend(el('div', { class: 'banner bad', style: 'margin:16px', text: 'The dashboard could not start: its model or data did not load.' }));
+    return;
+  }
+  ensureChartJs(() => {
+    init();
+    if (!window.Chart) setTimeout(() => { if (window.Chart) renderCharts(activeView); }, 1500);
+  });
+})();
+
+</script>
+</body>
+</html>
