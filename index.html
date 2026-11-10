@@ -386,6 +386,20 @@ footer.foot-page { padding: 6px 24px 28px; color: var(--muted); font-size: 12.5p
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
+/* glossary tips */
+.has-tip { cursor: help; }
+.tip-i { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; margin-left: 5px; padding: 0;
+  border: 1px solid currentColor; border-radius: 50%; background: none; color: var(--muted); font: 600 10px/1 var(--font-body);
+  font-style: normal; text-transform: none; letter-spacing: 0; cursor: help; vertical-align: 1px; flex: none; opacity: .75; position: relative; }
+.tip-i::after { content: ""; position: absolute; inset: -8px; } /* bigger tap target */
+.tip-i:hover, .tip-i[aria-expanded="true"] { color: var(--accent-ink); opacity: 1; }
+#tip-pop { position: fixed; top: 0; left: 0; z-index: 1000; max-width: min(300px, calc(100vw - 16px)); padding: 9px 11px; border-radius: 8px;
+  background: var(--ink); color: var(--surface); font: 400 12.5px/1.45 var(--font-body); text-align: left; white-space: normal;
+  box-shadow: 0 6px 24px rgba(0,0,0,.2); pointer-events: none; opacity: 0; visibility: hidden; transition: opacity .12s; }
+#tip-pop.show { opacity: 1; visibility: visible; }
+#tip-pop b { display: block; font-weight: 600; margin-bottom: 3px; }
+@media print { .tip-i, #tip-pop { display: none !important; } }
+
 </style>
 </head>
 <body>
@@ -2729,6 +2743,193 @@ net       = ΔC − carbon price · ΔCO₂_ETS     (or · ΔE on a life-cycle b
   function viewFromHash() { const h = (location.hash || '').replace('#', ''); return VIEWS.includes(h) ? h : 'savings'; }
 
   // ------------------------------------------------------------ init
+  // ------------------------------------------------------------ glossary tips
+  // Hover (or tap the small "i") on a label, tile, table row or chart title to see what it means.
+  const GLOSSARY = [
+    // criteria panel
+    [/^stage length/i, 'The flight distance in km. The model adds reserve fuel and a taxi, climb and descent allowance on top of it.'],
+    [/^seats$/i, 'Seats on the aircraft. Passengers = seats × load factor.'],
+    [/^load factor/i, 'The share of seats filled with passengers. Payload = passengers × mass per passenger + cargo.'],
+    [/^cargo$/i, 'Freight and mail carried in the hold, on top of passengers and their bags.'],
+    [/^(flights per aircraft|aircraft in fleet)/i, 'Only used to scale the per-flight results up to yearly totals for the fleet.'],
+    [/^pathway$/i, 'The process that turns a feedstock into jet fuel. HEFA: waste oils and fats treated with hydrogen (most SAF today). FT: waste or biomass gasified, then rebuilt into fuel by Fischer–Tropsch synthesis. ATJ: alcohol (ethanol or isobutanol) converted into jet fuel. PtL: e-fuel made from green hydrogen and captured CO₂.'],
+    [/^feedstock/i, 'The raw material the SAF is made from. Each one has a CORSIA default life-cycle emissions value, including emissions from any land-use change it causes.'],
+    [/^electricity carbon intensity/i, 'Grams of CO₂ emitted per kWh of electricity used to make power-to-liquid fuel. On grid-average electricity, e-fuel can be worse than fossil jet.'],
+    [/^saf share of the blend|^saf share$/i, 'The percentage of the fuel volume that is SAF; the rest is Jet A-1. Most pathways are approved up to 50%.'],
+    [/^synthetic share/i, 'The share of the blend, by volume, that is synthetic paraffinic kerosene (SPK), i.e. SAF. The standard caps it, usually at 50%, because SAF on its own lacks the aromatics and density Jet A-1 needs.'],
+    [/^jet a-1 price/i, 'The price of conventional jet fuel. Choose the IATA global average or the US Gulf Coast spot price.'],
+    [/^saf price/i, 'The price of pure (neat) SAF before blending. There is no free live SAF price, so this comes from published market assessments or a value you enter.'],
+    [/^carbon price/i, 'The cost of emitting one tonne of CO₂. Under the EU ETS airlines buy an allowance (EUA) for each tonne of fossil CO₂; eligible SAF counts as zero.'],
+    [/^(lhv|net heat of combustion|specific energy)/i, 'Lower heating value: the energy released by burning 1 kg of fuel, not counting heat recovered by condensing the water vapour. More MJ/kg means less fuel mass for the same range.'],
+    [/^density/i, 'Mass per volume at 15 °C, in kg/m³. Tanks are volume-limited, so lower density means less fuel mass in a full tank. Specification: 775–840 kg/m³.'],
+    [/^aromatics/i, 'Ring-shaped hydrocarbons found in fossil jet fuel. At least 8% is needed so the rubber seals in the fuel system swell and stay sealed; above 25% they cause smoke and soot. Most SAF has almost none.'],
+    [/^contingency fuel/i, 'Extra fuel, as a percentage of trip fuel, for headwinds, holding or rerouting.'],
+    [/^mass per passenger/i, 'Standard mass of one passenger including bags, used to work out the payload.'],
+    [/^alternate \+ final reserve/i, 'Fuel to divert to another airport and then hold for about 30 minutes, expressed as an equivalent cruise distance.'],
+    [/^taxi, climb, descent/i, 'Extra fuel for the parts of the flight that are less efficient than cruise, expressed as extra cruise distance.'],
+    [/^jet a-1 \(typical batch\)/i, 'Properties of a typical batch of conventional jet fuel. Real batches vary within the specification.'],
+    [/^neat/i, '“Neat” means pure, unblended SAF (100%), before it is mixed with Jet A-1.'],
+    [/^mission rules/i, 'Fuel-planning rules applied to every flight, in line with typical airline practice.'],
+    // savings tiles and charts
+    [/^extra fuel cost per year/i, 'How much more the fleet spends on fuel each year with the blend instead of Jet A-1.'],
+    [/^carbon cost avoided/i, 'EU ETS allowances the fleet no longer has to buy each year, because eligible SAF counts as zero emissions.'],
+    [/^net cost per year/i, 'Extra fuel cost minus carbon cost avoided. A negative value means the blend saves money.'],
+    [/^(abatement cost|abatement \(|cost of each tonne)/i, 'Net extra cost divided by tonnes of CO₂e avoided: what it costs to cut one tonne of emissions this way. Lower is better, and it lets you compare very different options on one scale.'],
+    [/^break-even saf price/i, 'The SAF price at which the blend costs the same as Jet A-1, once the carbon saving is included.'],
+    [/^break-even jet price/i, 'The Jet A-1 price at which the blend stops costing extra.'],
+    [/^break-even (carbon|ets)/i, 'The carbon price at which the carbon cost avoided pays for the extra fuel cost.'],
+    [/^saf needed per year/i, 'Tonnes of neat SAF the fleet would need to buy each year.'],
+    [/^cost per flight/i, 'Fuel cost plus carbon cost for one flight, Jet A-1 against your blend.'],
+    [/^when does the blend pay/i, 'For each Jet A-1 price, the carbon price needed for the blend to cost no more than Jet A-1. Above the line the blend is cheaper.'],
+    // performance
+    [/^trip fuel/i, 'Fuel burned from take-off to landing. Reserves are carried but not normally used.'],
+    [/^cruise tsfc/i, 'Thrust-specific fuel consumption: kg of fuel per hour for each unit of thrust. A fuel with more energy per kg needs fewer kg for the same thrust at the same engine efficiency.'],
+    [/^energy per (passenger-km|pkm)/i, 'Fuel energy used to carry one passenger one kilometre. A fuel-neutral measure of efficiency.'],
+    [/^fuel per 100 passenger-km/i, 'Fuel used to carry one passenger 100 km, in litres (and kg).'],
+    [/^range at max payload|^max payload, mtow/i, 'How far the aircraft can fly with a full payload before it reaches maximum take-off mass. The corner of the payload–range diagram.'],
+    [/^ferry/i, 'Range with no payload and full tanks. It is limited by tank volume, so a lower-density fuel shortens it.'],
+    [/^fuel loaded/i, 'Trip fuel plus reserves and contingency: everything in the tanks at take-off. The bar shows how full the tanks are.'],
+    [/^take-off mass/i, 'Aircraft + payload + fuel at take-off. The bar shows how close it is to the maximum take-off mass (MTOW).'],
+    [/^reserves and contingency/i, 'Fuel carried for safety (contingency, diversion and final reserve) that is not planned to be burned.'],
+    [/^energy used/i, 'Total fuel energy burned on the trip.'],
+    [/^combustion co₂/i, 'CO₂ physically released when the fuel burns, about 3.16 kg per kg of fuel. SAF releases a similar amount, but its carbon was recently taken out of the atmosphere.'],
+    [/^(fossil co₂ counted by ets|co₂ counted by eu ets|fossil co₂ under ets)/i, 'The CO₂ the airline pays for under the EU ETS. Only the fossil part counts if the SAF meets the sustainability threshold.'],
+    [/^life-cycle emissions by feedstock/i, 'Each feedstock’s CORSIA default value: core production emissions plus induced land-use change, against fossil jet at 89 gCO₂e/MJ.'],
+    [/^(life-cycle|t co₂e per flight)/i, 'Well-to-wake greenhouse gas emissions: producing the feedstock, making and transporting the fuel, and burning it. Measured in CO₂-equivalent (CO₂e).'],
+    [/^ci vs fossil|^vs fossil$/i, 'Change in life-cycle emissions compared with fossil jet fuel (89 gCO₂e/MJ).'],
+    [/^within mtow and tanks/i, 'Whether the mission fits under the maximum take-off mass and the fuel fits in the tanks.'],
+    [/^saf share by mass/i, 'SAF’s share of the blend by mass and by energy rather than by volume. These differ because SAF is lighter and has more energy per kg.'],
+    [/^energy density/i, 'Energy per litre (MJ/L) = LHV × density. This is what matters when the tanks are full.'],
+    [/^payload–range/i, 'How much payload can be carried how far. Flat part: limited by maximum payload. Sloping part: limited by MTOW, trading payload for fuel. Steep end: the tanks are full.'],
+    [/^corner point/i, 'The two corners of the payload–range diagram: maximum payload at MTOW, and ferry range with full tanks and no payload.'],
+    [/^mission fuel and mass/i, 'Fuel and mass breakdown for your flight with each fuel.'],
+    // aircraft data
+    [/^max take-off mass/i, 'MTOW: the heaviest the aircraft is certified to take off at.'],
+    [/^max zero-fuel mass/i, 'MZFW: the heaviest the aircraft may be without usable fuel, set by wing-root bending. It limits payload.'],
+    [/^operating empty mass/i, 'OEW: the aircraft ready to fly with crew and equipment, but no passengers, cargo or fuel.'],
+    [/^max payload$/i, 'MZFW minus OEW: the most passengers and cargo the aircraft can carry.'],
+    [/^fuel capacity/i, 'Usable volume of the fuel tanks.'],
+    [/^published range/i, 'The manufacturer’s quoted range, used to calibrate the model.'],
+    [/^calibrated/i, 'Overall efficiency × lift-to-drag ratio: the aircraft-efficiency term in the Breguet range equation. Tuned so the model matches the published range on Jet A-1.'],
+    [/^breguet range factor/i, 'η₀ · (L/D) · LHV / g, in km. Range = this factor × ln(take-off mass ÷ landing mass).'],
+    // fuel properties
+    [/^blend properties against/i, 'The blend’s properties checked against the jet fuel standards (ASTM D1655 / D7566, DEF STAN 91-091).'],
+    [/^how far can you blend/i, 'Raises the SAF share step by step and shows where density or aromatics leave the allowed range (off-spec).'],
+    [/^energy per kilogram against/i, 'SAF carries more energy per kg but less per litre than Jet A-1: lighter fuel, but less fits in the tank.'],
+    [/^off-spec/i, 'Off specification: the blend breaks a limit in the jet fuel standard, so it cannot legally be used as jet fuel.'],
+    [/^annex cap/i, 'The maximum SAF share the ASTM D7566 annex allows for this pathway, usually 50%.'],
+    [/^specification limit/i, 'A limit set by the jet fuel standard.'],
+    [/^100% .*not certified/i, 'Pure SAF is not yet approved for commercial flights. It is shown for comparison only.'],
+    // pathways
+    [/^hefa/i, 'Hydroprocessed esters and fatty acids: waste oils, fats or vegetable oils treated with hydrogen. Most SAF made today.'],
+    [/^ft-spk/i, 'Fischer–Tropsch: waste or biomass is gasified to syngas, then built back up into hydrocarbons.'],
+    [/^atj/i, 'Alcohol-to-jet: ethanol or isobutanol is dehydrated and joined into jet-range hydrocarbons.'],
+    [/^(ptl|e-spk)/i, 'Power-to-liquid e-fuel: green hydrogen from electrolysis plus captured CO₂, made into fuel by Fischer–Tropsch.'],
+    [/^core$/i, 'CORSIA core life-cycle value: emissions from growing or collecting the feedstock, processing, transport and combustion.'],
+    [/^land use$/i, 'Induced land-use change (ILUC): emissions from land converted elsewhere to grow the crop. It can be negative for crops that build up soil carbon.'],
+    [/^total gco₂e/i, 'Core value plus land-use change.'],
+    [/^liquid hydrogen/i, 'Liquid hydrogen for comparison only. It needs new aircraft, insulated tanks and airport infrastructure.'],
+    [/^tank gravimetric index/i, 'Fuel mass ÷ (fuel + tank mass). Higher means lighter tanks; LH₂ tanks are heavy.'],
+    [/^l\/d penalty/i, 'Loss of lift-to-drag ratio from the larger fuselage needed for bulky LH₂ tanks.'],
+    // market
+    [/^jet a-1, (global|iata)/i, 'IATA’s weekly global average jet fuel price, based on S&P Global Platts assessments.'],
+    [/^jet fuel, us gulf coast/i, 'Daily spot price of kerosene-type jet fuel on the US Gulf Coast, from the US EIA.'],
+    [/^eu ets allowance/i, 'Price of one EU allowance (EUA): the right to emit one tonne of CO₂ under the EU Emissions Trading System.'],
+    [/^saf \(hefa\)/i, 'Market price of HEFA-SPK in North-West Europe, the main traded SAF.']
+  ];
+  const TIP_SEL = 'label, .label, .rail-h, .card-h h3, .k-lbl, .t-lbl, table.data th, table.data td:first-child, dt, .legend > span';
+  function tipFor(text) {
+    const t = text.replace(/\s+/g, ' ').trim();
+    if (!t || t.length > 90) return null;
+    for (const [re, d] of GLOSSARY) if (re.test(t)) return d;
+    return null;
+  }
+  let tipPop = null, tipHost = null, tipPinned = false, tipTimer = 0;
+  function placeTip(host) {
+    const icon = host.querySelector(':scope > .tip-i') || host;
+    const r = icon.getBoundingClientRect(), pr = tipPop.getBoundingClientRect();
+    const vw = document.documentElement.clientWidth, vh = window.innerHeight;
+    let top = r.bottom + 8;
+    if (top + pr.height > vh - 8) top = Math.max(8, r.top - pr.height - 8);
+    let left = Math.min(Math.max(8, r.left + r.width / 2 - pr.width / 2), vw - pr.width - 8);
+    tipPop.style.top = top + 'px'; tipPop.style.left = left + 'px';
+  }
+  function showTip(host, pinned) {
+    clearTimeout(tipTimer);
+    if (tipHost && tipHost !== host) hideTip(true);
+    tipHost = host; tipPinned = !!pinned;
+    tipPop.textContent = '';
+    tipPop.append(el('b', { text: host.dataset.tipTerm }), document.createTextNode(host.dataset.tip));
+    tipPop.classList.add('show');
+    const icon = host.querySelector(':scope > .tip-i');
+    if (icon) { icon.setAttribute('aria-expanded', 'true'); icon.setAttribute('aria-describedby', 'tip-pop'); }
+    placeTip(host);
+  }
+  function hideTip(now) {
+    clearTimeout(tipTimer);
+    const go = () => {
+      if (!tipHost) return;
+      const icon = tipHost.querySelector(':scope > .tip-i');
+      if (icon) { icon.setAttribute('aria-expanded', 'false'); icon.removeAttribute('aria-describedby'); }
+      tipHost = null; tipPinned = false; tipPop.classList.remove('show');
+    };
+    if (now) go(); else tipTimer = setTimeout(go, 120);
+  }
+  function applyTips() {
+    document.querySelectorAll(TIP_SEL).forEach(h => {
+      if (h.closest('#tip-pop, .seg, .switch') || h.querySelector(':scope > .tip-i')) return;
+      const text = h.textContent;
+      if (h.dataset.tipNone === text) return;
+      const d = tipFor(text);
+      if (!d) { h.dataset.tipNone = text; return; }
+      const term = text.replace(/\s+/g, ' ').trim();
+      // in long tables only the first row of a run of identical names gets the icon
+      if (h.tagName === 'TD') {
+        const tb = h.closest('tbody');
+        if (tb && [...tb.querySelectorAll('td.has-tip')].some(c => c.dataset.tipTerm === term)) { h.dataset.tipNone = text; return; }
+      }
+      delete h.dataset.tipNone;
+      h.classList.add('has-tip'); h.dataset.tip = d; h.dataset.tipTerm = term;
+      const b = el('button', { type: 'button', class: 'tip-i', 'aria-label': 'What does “' + term + '” mean?', 'aria-expanded': 'false', text: 'i' });
+      // own listener so it runs before row/label click handlers and can stop them
+      b.addEventListener('click', e => {
+        e.preventDefault(); e.stopPropagation();
+        if (tipHost === h && tipPinned) hideTip(true); else showTip(h, true);
+      });
+      h.append(b);
+    });
+  }
+  function initTips() {
+    tipPop = el('div', { id: 'tip-pop', role: 'tooltip' });
+    document.body.append(tipPop);
+    applyTips();
+    let queued = false;
+    new MutationObserver(() => {
+      if (queued) return; queued = true;
+      requestAnimationFrame(() => { queued = false; applyTips(); });
+    }).observe(document.body, { childList: true, subtree: true });
+    const hoverable = window.matchMedia ? window.matchMedia('(hover: hover)').matches : true;
+    if (hoverable) {
+      document.addEventListener('mouseover', e => {
+        const h = e.target.closest && e.target.closest('.has-tip'); if (!h) return;
+        if (tipPinned && tipHost !== h) return;
+        clearTimeout(tipTimer);
+        if (tipHost !== h) tipTimer = setTimeout(() => showTip(h, false), 150);
+      });
+      document.addEventListener('mouseout', e => {
+        const h = e.target.closest && e.target.closest('.has-tip'); if (!h) return;
+        if (e.relatedTarget && h.contains(e.relatedTarget)) return;
+        if (!tipPinned) hideTip(false); else clearTimeout(tipTimer);
+      });
+    }
+    document.addEventListener('focusin', e => { if (e.target.classList && e.target.classList.contains('tip-i')) showTip(e.target.parentElement, false); });
+    document.addEventListener('focusout', e => { if (e.target.classList && e.target.classList.contains('tip-i') && !tipPinned) hideTip(true); });
+    document.addEventListener('click', e => { if (tipHost && !tipHost.contains(e.target)) hideTip(true); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && tipHost) hideTip(true); });
+    window.addEventListener('scroll', () => { if (tipHost) placeTip(tipHost); }, true);
+    window.addEventListener('resize', () => { if (tipHost) hideTip(true); });
+  }
+
   function init() {
     initControls();
     renderSources();
@@ -2765,6 +2966,7 @@ net       = ΔC − carbon price · ΔCO₂_ETS     (or · ΔE on a life-cycle b
     activeView = viewFromHash();
     VIEWS.forEach(n => { $('view-' + n).classList.toggle('active', n === activeView); $('tab-' + n).setAttribute('aria-selected', String(n === activeView)); });
     render();
+    initTips();
     connectFeed();
   }
 
